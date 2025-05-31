@@ -10,3 +10,4 @@ pub mod squeeze;
 pub mod util;
 pub mod blocksplitter;
 pub mod deflate;
+pub mod deflate_debug;

@@ -45,10 +45,11 @@ fuzz_target!(|data: &[u8]| {
         d_counts: d_counts.as_ptr() as *mut usize,
     };
     
+    #[cfg(feature = "c-fallback")]
     unsafe {
         // Test each block type
         for btype in 0..=2 {
-            let c_size = zopfli::ffi::deflate::calculate_block_size(&c_store as *const _, lstart, lend, btype);
+            let c_size = zopfli::ffi::ZopfliCalculateBlockSize(&c_store as *const _, lstart, lend, btype);
             let rust_size = zopfli::deflate::calculate_block_size(&rust_store, lstart, lend, btype);
             
             // Allow small differences due to floating point precision
@@ -61,7 +62,7 @@ fuzz_target!(|data: &[u8]| {
         }
         
         // Test auto type selection
-        let c_auto = zopfli::ffi::deflate::calculate_block_size_auto_type(&c_store as *const _, lstart, lend);
+        let c_auto = zopfli::ffi::ZopfliCalculateBlockSizeAutoType(&c_store as *const _, lstart, lend);
         let rust_auto = zopfli::deflate::calculate_block_size_auto_type(&rust_store, lstart, lend);
         
         let tolerance = 1.0;

@@ -9,42 +9,8 @@ use crate::lz77::ZopfliBlockState;
 /// tree and the size to encode all literal, length and distance symbols and their
 /// extra bits.
 fn estimate_cost(lz77: &ZopfliLZ77Store, lstart: usize, lend: usize) -> f64 {
-    #[cfg(feature = "c-fallback")]
-    unsafe {
-        // We need to create a temporary C store that owns the data
-        let litlens: Vec<u16> = lz77.litlens().to_vec();
-        let dists: Vec<u16> = lz77.dists().to_vec();
-        let pos: Vec<usize> = lz77.pos().to_vec();
-        let ll_symbol: Vec<u16> = lz77.ll_symbol().to_vec();
-        let d_symbol: Vec<u16> = lz77.d_symbol().to_vec();
-        let ll_counts: Vec<usize> = lz77.ll_counts().to_vec();
-        let d_counts: Vec<usize> = lz77.d_counts().to_vec();
-        
-        let c_store = crate::ffi::ZopfliLZ77StoreC {
-            litlens: litlens.as_ptr() as *mut u16,
-            dists: dists.as_ptr() as *mut u16,
-            size: lz77.size(),
-            data: lz77.data().as_ptr(),
-            pos: pos.as_ptr() as *mut usize,
-            ll_symbol: ll_symbol.as_ptr() as *mut u16,
-            d_symbol: d_symbol.as_ptr() as *mut u16,
-            ll_counts: ll_counts.as_ptr() as *mut usize,
-            d_counts: d_counts.as_ptr() as *mut usize,
-        };
-        
-        let result = crate::ffi::deflate::calculate_block_size_auto_type(
-            &c_store as *const _, 
-            lstart, 
-            lend
-        );
-        result
-    }
-    
-    #[cfg(not(feature = "c-fallback"))]
-    {
-        // Use the Rust implementation
-        crate::deflate::calculate_block_size_auto_type(lz77, lstart, lend)
-    }
+    // Always use the Rust implementation - no C fallback in production code
+    crate::deflate::calculate_block_size_auto_type(lz77, lstart, lend)
 }
 
 /// Context structure for split cost callback function
