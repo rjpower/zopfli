@@ -87,6 +87,22 @@ impl<'a> ZopfliLZ77Store<'a> {
         self.litlens.len()
     }
 
+    /// Gets the litlen and dist at a given index
+    pub fn get_litlen_dist(&self, index: usize) -> (u16, u16) {
+        (self.litlens[index], self.dists[index])
+    }
+
+    /// Clears the store
+    pub fn clear(&mut self) {
+        self.litlens.clear();
+        self.dists.clear();
+        self.pos.clear();
+        self.ll_symbol.clear();
+        self.d_symbol.clear();
+        self.ll_counts.clear();
+        self.d_counts.clear();
+    }
+
     /// Helper function for ceiling division, equivalent to CeilDiv in C
     fn ceil_div(a: usize, b: usize) -> usize {
         (a + b - 1) / b
@@ -323,6 +339,32 @@ impl<'a> ZopfliBlockState<'a> {
     pub fn block_end(&self) -> usize {
         self.block_end
     }
+
+    /// Sets the block start position (needed for lz77_optimal_fixed)
+    pub fn set_block_start(&mut self, start: usize) {
+        self.block_start = start;
+    }
+
+    /// Sets the block end position (needed for lz77_optimal_fixed)
+    pub fn set_block_end(&mut self, end: usize) {
+        self.block_end = end;
+    }
+
+    /// Finds the longest match (wrapper method)
+    pub fn find_longest_match(
+        &mut self,
+        h: &ZopfliHash,
+        array: &[u8],
+        pos: usize,
+        size: usize,
+        limit: usize,
+        sublen: Option<&mut [u16]>,
+    ) -> (u16, u16) {
+        let mut distance = 0;
+        let mut length = 0;
+        find_longest_match(self, h, array, pos, size, limit, sublen, &mut distance, &mut length);
+        (distance, length)
+    }
 }
 
 /// Verifies if length and dist are indeed valid, only used for assertion.
@@ -515,7 +557,7 @@ pub fn find_longest_match(
     let mut best_dist = 0u16;
     let mut best_length = 1u16;
     let mut chain_counter = ZOPFLI_MAX_CHAIN_HITS;
-    let mut dist = 0u32; // Not unsigned short on purpose (matches C)
+    let mut dist; // Not unsigned short on purpose (matches C)
 
     // Try to get from cache first (ZOPFLI_LONGEST_MATCH_CACHE)
     if try_get_from_longest_match_cache(s, pos, &mut limit, sublen.as_deref_mut(), distance, length) {
@@ -779,6 +821,149 @@ mod tests {
         assert_eq!(cloned.ll_symbol, store.ll_symbol);
         assert_eq!(cloned.d_symbol, store.d_symbol);
     }
+}
+
+/// Gets a score of the length given the distance. Typically, the score of the
+/// length is the length itself, but if the distance is very long, decrease the
+/// score of the length a bit to make up for the fact that long distances use
+/// large amounts of extra bits.
+/// 
+/// This is not an accurate score, it is a heuristic only for the greedy LZ77
+/// implementation. More accurate cost models are employed later. Making this
+/// heuristic more accurate may hurt rather than improve compression.
+/// 
+/// The two direct uses of this heuristic are:
+/// -avoid using a length of 3 in combination with a long distance. This only has
+///  an effect if length == 3.
+/// -make a slightly better choice between the two options of the lazy matching.
+/// 
+/// Indirectly, this affects:
+/// -the block split points if the default of block splitting first is used, in a
+///  rather unpredictable way
+/// -the first zopfli run, so it affects the chance of the first run being closer
+///  to the optimal output
+fn get_length_score(length: u16, distance: u16) -> u16 {
+    // At 1024, the distance uses 9+ extra bits and this seems to be the sweet spot
+    // on tested files.
+    if distance > 1024 {
+        length - 1
+    } else {
+        length
+    }
+}
+
+/// Does LZ77 using an algorithm similar to gzip, with lazy matching, rather than
+/// with the slow but better "squeeze" implementation.
+/// The result is placed in the ZopfliLZ77Store.
+/// If instart is larger than 0, it uses values before instart as starting
+/// dictionary.
+pub fn lz77_greedy(
+    s: &mut ZopfliBlockState,
+    input: &[u8],
+    instart: usize,
+    inend: usize,
+    store: &mut ZopfliLZ77Store,
+    h: &mut ZopfliHash,
+) {
+    let windowstart = if instart > ZOPFLI_WINDOW_SIZE {
+        instart - ZOPFLI_WINDOW_SIZE
+    } else {
+        0
+    };
+
+    if instart == inend {
+        return;
+    }
+
+    h.reset(ZOPFLI_WINDOW_SIZE);
+    h.warmup(input, windowstart, inend);
+    for i in windowstart..instart {
+        h.update(input, i, inend);
+    }
+
+    let mut i = instart;
+    let mut leng;
+    let mut dist;
+    let mut lengthscore;
+    #[cfg(feature = "zopfli-lazy-matching")]
+    let mut prev_length = 0;
+    #[cfg(feature = "zopfli-lazy-matching")]
+    let mut prev_match = 0;
+    #[cfg(feature = "zopfli-lazy-matching")]
+    let mut prevlengthscore: u16;
+    #[cfg(feature = "zopfli-lazy-matching")]
+    let mut match_available = false;
+
+    while i < inend {
+        h.update(input, i, inend);
+
+        let (distance, length) = s.find_longest_match(h, input, i, inend, ZOPFLI_MAX_MATCH, None);
+        dist = distance;
+        leng = length;
+        lengthscore = get_length_score(leng, dist);
+
+        // Lazy matching
+        #[cfg(feature = "zopfli-lazy-matching")]
+        {
+            prevlengthscore = get_length_score(prev_length, prev_match);
+            if match_available {
+                match_available = false;
+                if lengthscore > prevlengthscore + 1 {
+                    store.store_lit_len_dist(input[i - 1] as u16, 0, i - 1);
+                    if lengthscore >= ZOPFLI_MIN_MATCH as u16 && leng < ZOPFLI_MAX_MATCH as u16 {
+                        match_available = true;
+                        prev_length = leng;
+                        prev_match = dist;
+                        i += 1;
+                        continue;
+                    }
+                } else {
+                    // Add previous to output
+                    leng = prev_length;
+                    dist = prev_match;
+                    lengthscore = prevlengthscore;
+                    // Add to output
+                    verify_len_dist(input, i - 1, dist, leng);
+                    store.store_lit_len_dist(leng, dist, i - 1);
+                    for _ in 2..leng {
+                        debug_assert!(i < inend);
+                        i += 1;
+                        h.update(input, i, inend);
+                    }
+                    i += 1;
+                    continue;
+                }
+            } else if lengthscore >= ZOPFLI_MIN_MATCH as u16 && leng < ZOPFLI_MAX_MATCH as u16 {
+                match_available = true;
+                prev_length = leng;
+                prev_match = dist;
+                i += 1;
+                continue;
+            }
+            // End of lazy matching logic
+        }
+
+        // Add to output
+        if lengthscore >= ZOPFLI_MIN_MATCH as u16 {
+            verify_len_dist(input, i, dist, leng);
+            store.store_lit_len_dist(leng, dist, i);
+        } else {
+            leng = 1;
+            store.store_lit_len_dist(input[i] as u16, 0, i);
+        }
+
+        for _ in 1..leng {
+            debug_assert!(i < inend);
+            i += 1;
+            h.update(input, i, inend);
+        }
+        i += 1;
+    }
+}
+
+#[cfg(test)]
+mod additional_tests {
+    use super::*;
 
     #[test]
     fn test_append_store() {

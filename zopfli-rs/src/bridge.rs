@@ -345,3 +345,46 @@ impl Drop for ZopfliLongestMatchCacheBridge {
         }
     }
 }
+
+/// LZ77 optimal compression
+pub fn lz77_optimal<'a>(
+    s: &mut crate::lz77::ZopfliBlockState,
+    input: &'a [u8],
+    instart: usize,
+    inend: usize,
+    numiterations: i32,
+    store: &mut crate::lz77::ZopfliLZ77Store<'a>,
+) {
+    #[cfg(feature = "c-fallback")]
+    {
+        // For now, use Rust implementation even with c-fallback
+        // until we create proper FFI bindings for complex structs
+        crate::squeeze::lz77_optimal(s, input, instart, inend, numiterations, store)
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::squeeze::lz77_optimal(s, input, instart, inend, numiterations, store)
+    }
+}
+
+/// LZ77 optimal fixed compression
+pub fn lz77_optimal_fixed<'a>(
+    s: &mut crate::lz77::ZopfliBlockState,
+    input: &'a [u8],
+    instart: usize,
+    inend: usize,
+    store: &mut crate::lz77::ZopfliLZ77Store<'a>,
+) {
+    #[cfg(feature = "c-fallback")]
+    {
+        // For now, use Rust implementation even with c-fallback
+        // until we create proper FFI bindings for complex structs
+        crate::squeeze::lz77_optimal_fixed(s, input, instart, inend, store)
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::squeeze::lz77_optimal_fixed(s, input, instart, inend, store)
+    }
+}

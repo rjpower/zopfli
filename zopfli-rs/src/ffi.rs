@@ -34,6 +34,19 @@ pub struct ZopfliBlockStateC {
     blockend: usize,
 }
 
+#[repr(C)]
+pub struct ZopfliLZ77StoreC {
+    litlens: *mut c_ushort,
+    dists: *mut c_ushort,
+    size: usize,
+    data: *const c_uchar,
+    pos: *mut usize,
+    ll_symbol: *mut c_ushort,
+    d_symbol: *mut c_ushort,
+    ll_counts: *mut usize,
+    d_counts: *mut usize,
+}
+
 #[cfg(feature = "c-fallback")]
 extern "C" {
     // Options functions
@@ -122,6 +135,61 @@ extern "C" {
         dist: c_ushort,
         length: c_ushort
     );
+
+    // LZ77Store functions
+    pub fn ZopfliInitLZ77Store(data: *const c_uchar, store: *mut ZopfliLZ77StoreC);
+    pub fn ZopfliCleanLZ77Store(store: *mut ZopfliLZ77StoreC);
+    pub fn ZopfliCopyLZ77Store(source: *const ZopfliLZ77StoreC, dest: *mut ZopfliLZ77StoreC);
+    pub fn ZopfliStoreLitLenDist(length: c_ushort, dist: c_ushort, pos: usize, store: *mut ZopfliLZ77StoreC);
+    pub fn ZopfliAppendLZ77Store(store: *const ZopfliLZ77StoreC, target: *mut ZopfliLZ77StoreC);
+    pub fn ZopfliLZ77GetByteRange(lz77: *const ZopfliLZ77StoreC, lstart: usize, lend: usize) -> usize;
+    pub fn ZopfliLZ77GetHistogram(
+        lz77: *const ZopfliLZ77StoreC,
+        lstart: usize,
+        lend: usize,
+        ll_counts: *mut usize,
+        d_counts: *mut usize
+    );
+    pub fn ZopfliLZ77Greedy(
+        s: *mut ZopfliBlockStateC,
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        store: *mut ZopfliLZ77StoreC,
+        h: *mut ZopfliHashC
+    );
+
+    // Squeeze functions - the main external functions we're porting
+    pub fn ZopfliLZ77Optimal(
+        s: *mut ZopfliBlockStateC,
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        numiterations: c_int,
+        store: *mut ZopfliLZ77StoreC
+    );
+
+    pub fn ZopfliLZ77OptimalFixed(
+        s: *mut ZopfliBlockStateC,
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        store: *mut ZopfliLZ77StoreC
+    );
+
+    // Calculate block size functions (from deflate.h) - needed for cost calculation
+    pub fn ZopfliCalculateBlockSize(
+        lz77: *const ZopfliLZ77StoreC,
+        lstart: usize,
+        lend: usize,
+        btype: c_int
+    ) -> c_double;
+
+    // Helper functions for testing LZ77Store contents
+    pub fn ZopfliLZ77StoreGetSize(store: *const ZopfliLZ77StoreC) -> usize;
+    pub fn ZopfliLZ77StoreGetLitLen(store: *const ZopfliLZ77StoreC, index: usize) -> c_ushort;
+    pub fn ZopfliLZ77StoreGetDist(store: *const ZopfliLZ77StoreC, index: usize) -> c_ushort;
+    pub fn ZopfliLZ77StoreGetPos(store: *const ZopfliLZ77StoreC, index: usize) -> usize;
 
 }
 

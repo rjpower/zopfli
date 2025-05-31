@@ -50,3 +50,9 @@ name = "fuzz_lz77_comprehensive"
 path = "fuzz_targets/fuzz_lz77_comprehensive.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_squeeze"
+path = "fuzz_targets/fuzz_squeeze.rs"
+test = false
+doc = false

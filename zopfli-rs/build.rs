@@ -17,15 +17,25 @@ fn main() {
     println!("cargo:rerun-if-changed=../src/zopfli/cache.h");
     println!("cargo:rerun-if-changed=../src/zopfli/lz77.c");
     println!("cargo:rerun-if-changed=../src/zopfli/lz77.h");
+    println!("cargo:rerun-if-changed=../src/zopfli/squeeze.c");
+    println!("cargo:rerun-if-changed=../src/zopfli/squeeze.h");
+    println!("cargo:rerun-if-changed=../src/zopfli/deflate.c");
+    println!("cargo:rerun-if-changed=../src/zopfli/deflate.h");
+    println!("cargo:rerun-if-changed=../src/zopfli/blocksplitter.c");
+    println!("cargo:rerun-if-changed=../src/zopfli/blocksplitter.h");
     
     Build::new()
         .file("src/symbols_wrapper.c")
+        .file("src/lz77_store_wrapper.c")
         .file("../src/zopfli/util.c")
         .file("../src/zopfli/tree.c")
         .file("../src/zopfli/katajainen.c")
         .file("../src/zopfli/hash.c")
         .file("../src/zopfli/cache.c")
         .file("../src/zopfli/lz77.c")
+        .file("../src/zopfli/squeeze.c")
+        .file("../src/zopfli/deflate.c")
+        .file("../src/zopfli/blocksplitter.c")
         .include("../src/zopfli")
         .compile("zopfli_c");
 }

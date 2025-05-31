@@ -6,3 +6,5 @@ pub mod tree;
 pub mod hash;
 pub mod cache;
 pub mod lz77;
+pub mod squeeze;
+pub mod util;
