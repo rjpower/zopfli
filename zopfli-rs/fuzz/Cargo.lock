@@ -160,6 +160,7 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "glob",
+ "libc",
 ]
 
 [[package]]
@@ -167,6 +168,7 @@ name = "zopfli-fuzz"
 version = "0.0.0"
 dependencies = [
  "arbitrary",
+ "libc",
  "libfuzzer-sys",
  "zopfli",
 ]

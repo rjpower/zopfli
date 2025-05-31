@@ -388,3 +388,163 @@ pub fn lz77_optimal_fixed<'a>(
         crate::squeeze::lz77_optimal_fixed(s, input, instart, inend, store)
     }
 }
+
+/// Convert Rust ZopfliLZ77Store to C representation for FFI calls
+#[cfg(feature = "c-fallback")]
+pub fn lz77_store_to_c(store: &crate::lz77::ZopfliLZ77Store) -> crate::ffi::ZopfliLZ77StoreC {
+    use std::os::raw::c_ushort;
+    
+    // Create vectors with the data
+    let litlens: Vec<c_ushort> = store.litlens().iter().map(|&x| x as c_ushort).collect();
+    let dists: Vec<c_ushort> = store.dists().iter().map(|&x| x as c_ushort).collect();
+    let pos: Vec<usize> = store.pos().to_vec();
+    let ll_symbol: Vec<c_ushort> = store.ll_symbol().iter().map(|&x| x as c_ushort).collect();
+    let d_symbol: Vec<c_ushort> = store.d_symbol().iter().map(|&x| x as c_ushort).collect();
+    let ll_counts: Vec<usize> = store.ll_counts().to_vec();
+    let d_counts: Vec<usize> = store.d_counts().to_vec();
+    
+    crate::ffi::ZopfliLZ77StoreC {
+        litlens: litlens.as_ptr() as *mut c_ushort,
+        dists: dists.as_ptr() as *mut c_ushort,
+        size: store.size(),
+        data: store.data().as_ptr(),
+        pos: pos.as_ptr() as *mut usize,
+        ll_symbol: ll_symbol.as_ptr() as *mut c_ushort,
+        d_symbol: d_symbol.as_ptr() as *mut c_ushort,
+        ll_counts: ll_counts.as_ptr() as *mut usize,
+        d_counts: d_counts.as_ptr() as *mut usize,
+    }
+}
+
+/// Block splitting functions
+
+/// Does blocksplitting on LZ77 data.
+/// The output splitpoints are indices in the LZ77 data.
+/// maxblocks: set a limit to the amount of blocks. Set to 0 to mean no limit.
+pub fn block_split_lz77(
+    options: &crate::options::ZopfliOptions,
+    lz77: &crate::lz77::ZopfliLZ77Store,
+    maxblocks: usize,
+) -> Vec<usize> {
+    #[cfg(feature = "c-fallback")]
+    unsafe {
+        let mut splitpoints: *mut usize = std::ptr::null_mut();
+        let mut npoints: usize = 0;
+        
+        let c_store = lz77_store_to_c(lz77);
+        crate::ffi::blocksplitter::block_split_lz77(
+            options as *const _,
+            &c_store as *const _,
+            maxblocks,
+            &mut splitpoints,
+            &mut npoints,
+        );
+        
+        // Convert C array to Rust Vec
+        let result = if npoints > 0 && !splitpoints.is_null() {
+            std::slice::from_raw_parts(splitpoints, npoints).to_vec()
+        } else {
+            Vec::new()
+        };
+        
+        // Free the C-allocated memory
+        if !splitpoints.is_null() {
+            libc::free(splitpoints as *mut libc::c_void);
+        }
+        
+        result
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::blocksplitter::block_split_lz77(options, lz77, maxblocks)
+    }
+}
+
+/// Does blocksplitting on uncompressed data.
+/// The output splitpoints are indices in the uncompressed bytes.
+pub fn block_split(
+    options: &crate::options::ZopfliOptions,
+    input: &[u8],
+    instart: usize,
+    inend: usize,
+    maxblocks: usize,
+) -> Vec<usize> {
+    #[cfg(feature = "c-fallback")]
+    unsafe {
+        let mut splitpoints: *mut usize = std::ptr::null_mut();
+        let mut npoints: usize = 0;
+        
+        crate::ffi::blocksplitter::block_split(
+            options as *const _,
+            input.as_ptr(),
+            instart,
+            inend,
+            maxblocks,
+            &mut splitpoints,
+            &mut npoints,
+        );
+        
+        // Convert C array to Rust Vec
+        let result = if npoints > 0 && !splitpoints.is_null() {
+            std::slice::from_raw_parts(splitpoints, npoints).to_vec()
+        } else {
+            Vec::new()
+        };
+        
+        // Free the C-allocated memory
+        if !splitpoints.is_null() {
+            libc::free(splitpoints as *mut libc::c_void);
+        }
+        
+        result
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::blocksplitter::block_split(options, input, instart, inend, maxblocks)
+    }
+}
+
+/// Divides the input into equal blocks, does not even take LZ77 lengths into
+/// account.
+pub fn block_split_simple(
+    input: &[u8],
+    instart: usize,
+    inend: usize,
+    blocksize: usize,
+) -> Vec<usize> {
+    #[cfg(feature = "c-fallback")]
+    unsafe {
+        let mut splitpoints: *mut usize = std::ptr::null_mut();
+        let mut npoints: usize = 0;
+        
+        crate::ffi::blocksplitter::block_split_simple(
+            input.as_ptr(),
+            instart,
+            inend,
+            blocksize,
+            &mut splitpoints,
+            &mut npoints,
+        );
+        
+        // Convert C array to Rust Vec
+        let result = if npoints > 0 && !splitpoints.is_null() {
+            std::slice::from_raw_parts(splitpoints, npoints).to_vec()
+        } else {
+            Vec::new()
+        };
+        
+        // Free the C-allocated memory
+        if !splitpoints.is_null() {
+            libc::free(splitpoints as *mut libc::c_void);
+        }
+        
+        result
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::blocksplitter::block_split_simple(input, instart, inend, blocksize)
+    }
+}

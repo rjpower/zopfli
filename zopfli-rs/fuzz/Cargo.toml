@@ -10,6 +10,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
+libc = "0.2"
 
 [dependencies.zopfli]
 path = ".."
@@ -54,5 +55,11 @@ doc = false
 [[bin]]
 name = "fuzz_squeeze"
 path = "fuzz_targets/fuzz_squeeze.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_blocksplitter"
+path = "fuzz_targets/fuzz_blocksplitter.rs"
 test = false
 doc = false

@@ -16,6 +16,7 @@ deflate-rust = []
 hash-rust = []
 
 [dependencies]
+libc = "0.2"
 
 [build-dependencies]
 cc = { version = "1.0", optional = true }

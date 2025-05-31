@@ -36,15 +36,15 @@ pub struct ZopfliBlockStateC {
 
 #[repr(C)]
 pub struct ZopfliLZ77StoreC {
-    litlens: *mut c_ushort,
-    dists: *mut c_ushort,
-    size: usize,
-    data: *const c_uchar,
-    pos: *mut usize,
-    ll_symbol: *mut c_ushort,
-    d_symbol: *mut c_ushort,
-    ll_counts: *mut usize,
-    d_counts: *mut usize,
+    pub litlens: *mut c_ushort,
+    pub dists: *mut c_ushort,
+    pub size: usize,
+    pub data: *const c_uchar,
+    pub pos: *mut usize,
+    pub ll_symbol: *mut c_ushort,
+    pub d_symbol: *mut c_ushort,
+    pub ll_counts: *mut usize,
+    pub d_counts: *mut usize,
 }
 
 #[cfg(feature = "c-fallback")]
@@ -184,6 +184,40 @@ extern "C" {
         lend: usize,
         btype: c_int
     ) -> c_double;
+
+    pub fn ZopfliCalculateBlockSizeAutoType(
+        lz77: *const ZopfliLZ77StoreC,
+        lstart: usize,
+        lend: usize
+    ) -> c_double;
+
+    // Block splitting functions (from blocksplitter.h)
+    pub fn ZopfliBlockSplitLZ77(
+        options: *const ZopfliOptions,
+        lz77: *const ZopfliLZ77StoreC,
+        maxblocks: usize,
+        splitpoints: *mut *mut usize,
+        npoints: *mut usize
+    );
+
+    pub fn ZopfliBlockSplit(
+        options: *const ZopfliOptions,
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        maxblocks: usize,
+        splitpoints: *mut *mut usize,
+        npoints: *mut usize
+    );
+
+    pub fn ZopfliBlockSplitSimple(
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        blocksize: usize,
+        splitpoints: *mut *mut usize,
+        npoints: *mut usize
+    );
 
     // Helper functions for testing LZ77Store contents
     pub fn ZopfliLZ77StoreGetSize(store: *const ZopfliLZ77StoreC) -> usize;
@@ -354,6 +388,73 @@ pub mod cache {
     #[inline]
     pub unsafe fn max_cached_sublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize) -> u32 {
         ZopfliMaxCachedSublen(lmc, pos, length)
+    }
+}
+
+// Convenience wrappers for deflate functions
+#[cfg(feature = "c-fallback")]
+pub mod deflate {
+    use super::*;
+    
+    #[inline]
+    pub unsafe fn calculate_block_size(
+        lz77: *const ZopfliLZ77StoreC,
+        lstart: usize,
+        lend: usize,
+        btype: c_int
+    ) -> c_double {
+        ZopfliCalculateBlockSize(lz77, lstart, lend, btype)
+    }
+    
+    #[inline]
+    pub unsafe fn calculate_block_size_auto_type(
+        lz77: *const ZopfliLZ77StoreC,
+        lstart: usize,
+        lend: usize
+    ) -> c_double {
+        ZopfliCalculateBlockSizeAutoType(lz77, lstart, lend)
+    }
+}
+
+// Convenience wrappers for block splitting functions
+#[cfg(feature = "c-fallback")]
+pub mod blocksplitter {
+    use super::*;
+    
+    #[inline]
+    pub unsafe fn block_split_lz77(
+        options: *const ZopfliOptions,
+        lz77: *const ZopfliLZ77StoreC,
+        maxblocks: usize,
+        splitpoints: *mut *mut usize,
+        npoints: *mut usize
+    ) {
+        ZopfliBlockSplitLZ77(options, lz77, maxblocks, splitpoints, npoints)
+    }
+    
+    #[inline]
+    pub unsafe fn block_split(
+        options: *const ZopfliOptions,
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        maxblocks: usize,
+        splitpoints: *mut *mut usize,
+        npoints: *mut usize
+    ) {
+        ZopfliBlockSplit(options, input, instart, inend, maxblocks, splitpoints, npoints)
+    }
+    
+    #[inline]
+    pub unsafe fn block_split_simple(
+        input: *const c_uchar,
+        instart: usize,
+        inend: usize,
+        blocksize: usize,
+        splitpoints: *mut *mut usize,
+        npoints: *mut usize
+    ) {
+        ZopfliBlockSplitSimple(input, instart, inend, blocksize, splitpoints, npoints)
     }
 }
 

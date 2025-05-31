@@ -92,6 +92,46 @@ impl<'a> ZopfliLZ77Store<'a> {
         (self.litlens[index], self.dists[index])
     }
 
+    /// Gets a reference to the litlens array
+    pub fn litlens(&self) -> &[u16] {
+        &self.litlens
+    }
+
+    /// Gets a reference to the dists array
+    pub fn dists(&self) -> &[u16] {
+        &self.dists
+    }
+
+    /// Gets a reference to the data
+    pub fn data(&self) -> &[u8] {
+        self.data
+    }
+
+    /// Gets a reference to the pos array
+    pub fn pos(&self) -> &[usize] {
+        &self.pos
+    }
+
+    /// Gets a reference to the ll_symbol array
+    pub fn ll_symbol(&self) -> &[u16] {
+        &self.ll_symbol
+    }
+
+    /// Gets a reference to the d_symbol array
+    pub fn d_symbol(&self) -> &[u16] {
+        &self.d_symbol
+    }
+
+    /// Gets a reference to the ll_counts array
+    pub fn ll_counts(&self) -> &[usize] {
+        &self.ll_counts
+    }
+
+    /// Gets a reference to the d_counts array
+    pub fn d_counts(&self) -> &[usize] {
+        &self.d_counts
+    }
+
     /// Clears the store
     pub fn clear(&mut self) {
         self.litlens.clear();

@@ -881,6 +881,7 @@ dependencies = [
  "cc",
  "criterion",
  "glob",
+ "libc",
  "proptest",
  "rand",
 ]
