@@ -1,0 +1,28 @@
+[package]
+name = "zopfli-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+[dependencies.zopfli]
+path = ".."
+features = ["c-fallback"]
+
+[[bin]]
+name = "fuzz_symbols"
+path = "fuzz_targets/fuzz_symbols.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_tree"
+path = "fuzz_targets/fuzz_tree.rs"
+test = false
+doc = false

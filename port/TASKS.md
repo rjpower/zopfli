@@ -1,0 +1,228 @@
+Here's the Zopfli C to Rust porting task list as a Markdown checklist:
+
+**Phase 0: Setup & Basic Structures**
+-   [x] **Task 1: Port `ZopfliOptions` and `ZopfliInitOptions`**
+    -   [x] Define `ZopfliOptions` struct in Rust.
+    -   [x] Implement `Default::default()` or `new()` for `ZopfliOptions`.
+    -   [x] Test: Compare initialized struct members between C and Rust.
+
+**Phase 1: Symbol Utilities (Pure Functions)**
+-   [x] **Task 3: Port `ZopfliGetDistExtraBits`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare return values for various `dist` inputs.
+-   [x] **Task 4: Port `ZopfliGetDistExtraBitsValue`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare return values for various `dist` inputs.
+-   [x] **Task 5: Port `ZopfliGetDistSymbol`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare return values for various `dist` inputs.
+-   [x] **Task 6: Port `ZopfliGetLengthExtraBits` (and its static table)**
+    -   [x] Implement Rust function and static table.
+    -   [x] Test: Compare return values for various `l` inputs.
+-   [x] **Task 7: Port `ZopfliGetLengthExtraBitsValue` (and its static table)**
+    -   [x] Implement Rust function and static table.
+    -   [x] Test: Compare return values for various `l` inputs.
+-   [x] **Task 8: Port `ZopfliGetLengthSymbol` (and its static table)**
+    -   [x] Implement Rust function and static table.
+    -   [x] Test: Compare return values for various `l` inputs.
+-   [x] **Task 9: Port `ZopfliGetLengthSymbolExtraBits` (and its static table)**
+    -   [x] Implement Rust function and static table.
+    -   [x] Test: Compare return values for various `s` inputs.
+-   [x] **Task 10: Port `ZopfliGetDistSymbolExtraBits` (and its static table)**
+    -   [x] Implement Rust function and static table.
+    -   [x] Test: Compare return values for various `s` inputs.
+
+**Phase 2: Huffman Tree Algorithms**
+-   [x] **Task 11: Port `ZopfliLengthLimitedCodeLengths` (Katajainen Algorithm)**
+    -   [x] Implement Rust function (including `Node`, `NodePool` logic or equivalent).
+    -   [x] Test: Compare `bitlengths` array and return code for known inputs.
+-   [x] **Task 12: Port `ZopfliCalculateBitLengths`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `bitlengths` array.
+-   [x] **Task 13: Port `ZopfliLengthsToSymbols`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `symbols` array.
+-   [x] **Task 14: Port `ZopfliCalculateEntropy`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `bitlengths` (double array) with tolerance.
+
+**Phase 3: Hash Table & Longest Match Cache**
+-   [ ] **Task 15: Port `ZopfliHash` struct and its lifecycle functions**
+    -   [ ] Define `ZopfliHash` struct in Rust.
+    -   [ ] Implement `new()` (alloc & reset).
+    -   [ ] Implement `Drop` (clean).
+    -   [ ] Test: Compare initial struct state between C and Rust.
+-   [ ] **Task 16: Port `ZopfliWarmupHash`**
+    -   [ ] Implement Rust method for `ZopfliHash`.
+    -   [ ] Test: Compare `h->val` after warmup.
+-   [ ] **Task 17: Port `ZopfliUpdateHash`**
+    -   [ ] Implement Rust method for `ZopfliHash`.
+    -   [ ] Test: Compare relevant `ZopfliHash` fields after updates.
+-   [ ] **Task 18: Port `ZopfliLongestMatchCache` struct and its lifecycle functions**
+    -   [ ] Define `ZopfliLongestMatchCache` struct in Rust.
+    -   [ ] Implement `new()` (init).
+    -   [ ] Implement `Drop` (clean).
+    -   [ ] Test: Compare initial cache state between C and Rust.
+-   [ ] **Task 19: Port `ZopfliSublenToCache`**
+    -   [ ] Implement Rust method for `ZopfliLongestMatchCache`.
+    -   [ ] Test: Compare `lmc->sublen` content.
+-   [ ] **Task 20: Port `ZopfliMaxCachedSublen`**
+    -   [ ] Implement Rust method for `ZopfliLongestMatchCache`.
+    -   [ ] Test: Compare return value.
+-   [ ] **Task 21: Port `ZopfliCacheToSublen`**
+    -   [ ] Implement Rust method for `ZopfliLongestMatchCache`.
+    -   [ ] Test: Compare reconstructed `sublen_out` array.
+
+**Phase 4: LZ77 Store and Operations**
+-   [ ] **Task 22: Port `ZopfliLZ77Store` struct and its lifecycle functions**
+    -   [ ] Define `ZopfliLZ77Store` struct in Rust.
+    -   [ ] Implement `new()`.
+    -   [ ] Implement `Drop`.
+    -   [ ] Test: Check initial state.
+-   [ ] **Task 23: Port `ZopfliStoreLitLenDist`**
+    -   [ ] Implement Rust method for `ZopfliLZ77Store`.
+    -   [ ] Test: Compare store fields after adding items.
+-   [ ] **Task 24: Port `ZopfliCopyLZ77Store`**
+    -   [ ] Implement `Clone` or `copy` method for `ZopfliLZ77Store`.
+    -   [ ] Test: Compare all fields of original and copied store.
+-   [ ] **Task 25: Port `ZopfliAppendLZ77Store`**
+    -   [ ] Implement Rust method for `ZopfliLZ77Store`.
+    -   [ ] Test: Compare target store contents after append.
+-   [ ] **Task 26: Port `ZopfliLZ77GetByteRange`**
+    -   [ ] Implement Rust method for `ZopfliLZ77Store`.
+    -   [ ] Test: Compare return value for a known store segment.
+-   [ ] **Task 27: Port `ZopfliLZ77GetHistogram` (and `ZopfliLZ77GetHistogramAt`)**
+    -   [ ] Implement Rust method and its helper.
+    -   [ ] Test: Compare `ll_counts` and `d_counts` arrays for a known store.
+-   [ ] **Task 28: Port `ZopfliBlockState` struct and its lifecycle functions**
+    -   [ ] Define `ZopfliBlockState` struct in Rust.
+    -   [ ] Implement `new()`.
+    -   [ ] Implement `Drop`.
+    -   [ ] Test: Check initial field values and LMC state.
+-   [ ] **Task 29: Port `ZopfliVerifyLenDist`**
+    -   [ ] Implement as `debug_assert!` based function.
+    -   [ ] Test: Ensure asserts trigger/pass correctly.
+-   [ ] **Task 30: Port `ZopfliFindLongestMatch` (and `GetMatch`)**
+    -   [ ] Implement Rust function and helper.
+    -   [ ] Test: Compare `distance`, `length`, and `sublen` (if used) output. Test LMC.
+-   [ ] **Task 31: Port `ZopfliLZ77Greedy` (and `GetLengthScore`)**
+    -   [ ] Implement Rust function and helper.
+    -   [ ] Test: Compare entire output `ZopfliLZ77Store`.
+
+**Phase 5: Squeeze (Optimal LZ77)**
+-   [ ] **Task 32: Port `SymbolStats` struct and its utility functions**
+    -   [ ] Define `SymbolStats` struct.
+    -   [ ] Port `InitStats`, `CopyStats`, `AddWeighedStatFreqs`.
+    -   [ ] Port `RandomizeFreqs`, `RandomizeStatFreqs` (and `RanState`).
+    -   [ ] Port `ClearStatFreqs`, `CalculateStatistics`, `GetStatistics`.
+    -   [ ] Test: For each function, compare output `SymbolStats` struct state.
+-   [ ] **Task 33: Port `CostModelFun` and implementations (`GetCostFixed`, `GetCostStat`)**
+    -   [ ] Define Rust equivalents (closures/traits).
+    -   [ ] Test: Compare returned `double` cost with tolerance.
+-   [ ] **Task 34: Port `GetBestLengths` (Dynamic Programming Core)**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare `length_array` and `costs` array (costs with tolerance).
+-   [ ] **Task 35: Port `TraceBackwards`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output `path` array.
+-   [ ] **Task 36: Port `FollowPath`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output `ZopfliLZ77Store`.
+-   [ ] **Task 37: Port `ZopfliLZ77OptimalFixed`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output `ZopfliLZ77Store`.
+-   [ ] **Task 38: Port `ZopfliLZ77Optimal`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare final output `ZopfliLZ77Store`.
+
+**Phase 6: Block Splitting**
+-   [ ] **Task 39: Port `EstimateCost` helper (via `ZopfliCalculateBlockSizeAutoType`)**
+    -   [ ] Note: Integrated into `ZopfliCalculateBlockSizeAutoType` port.
+-   [ ] **Task 40: Port `FindMinimum` helper (and its callback infrastructure)**
+    -   [ ] Implement `FindMinimum` and callback in Rust.
+    -   [ ] Test: Compare returned index and `smallest` value with tolerance.
+-   [ ] **Task 41: Port `AddSorted` helper**
+    -   [ ] Implement Rust logic for `Vec<usize>`.
+    -   [ ] Test: Verify sorted property after adds.
+-   [ ] **Task 42: Port `ZopfliBlockSplitLZ77`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare `splitpoints` array and `npoints`.
+-   [ ] **Task 43: Port `ZopfliBlockSplit`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare `splitpoints` (byte offsets) and `npoints`.
+-   [ ] **Task 44: Port `ZopfliBlockSplitSimple`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare `splitpoints` and `npoints`.
+
+**Phase 7: DEFLATE Encoding Logic**
+-   [ ] **Task 45: Port Bit-writing functions (`AddBit`, `AddBits`, `AddHuffmanBits`)**
+    -   [ ] Implement Rust bitstream writer.
+    -   [ ] Test: Compare resulting byte array and final bit pointer.
+-   [ ] **Task 46: Port `PatchDistanceCodesForBuggyDecoders`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare modified `d_lengths` array.
+-   [ ] **Task 47: Port `EncodeTree` (and RLE logic)**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output bitstream and size (for `size_only` path).
+-   [ ] **Task 48: Port `CalculateTreeSize`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare returned size.
+-   [ ] **Task 49: Port `AddDynamicTree`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output bitstream.
+-   [ ] **Task 50: Port `AddLZ77Data`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output bitstream.
+-   [ ] **Task 51: Port `GetFixedTree`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare `ll_lengths` and `d_lengths` arrays.
+-   [ ] **Task 52: Port `CalculateBlockSymbolSize` (and helpers)**
+    -   [ ] Implement `CalculateBlockSymbolSizeSmall`, `GivenCounts`, then main func.
+    -   [ ] Test: Compare returned `double` size with tolerance.
+-   [ ] **Task 53: Port `OptimizeHuffmanForRle` and `TryOptimizeHuffmanForRle`**
+    -   [ ] Implement Rust functions.
+    -   [ ] Test: Compare modified arrays and returned cost with tolerance.
+-   [ ] **Task 54: Port `GetDynamicLengths`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output arrays and returned cost with tolerance.
+-   [ ] **Task 55: Port `ZopfliCalculateBlockSize`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare returned `double` size with tolerance.
+-   [ ] **Task 56: Port `ZopfliCalculateBlockSizeAutoType`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare returned `double` size with tolerance.
+-   [ ] **Task 57: Port `AddNonCompressedBlock`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output bitstream.
+-   [ ] **Task 58: Port `AddLZ77Block`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output bitstream.
+-   [ ] **Task 59: Port `AddLZ77BlockAutoType`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare output bitstream.
+-   [ ] **Task 60: Port `ZopfliDeflatePart`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare final output bitstream (major integration).
+-   [ ] **Task 61: Port `ZopfliDeflate`**
+    -   [ ] Implement Rust function (handles `ZOPFLI_MASTER_BLOCK_SIZE`).
+    -   [ ] Test: Compare final output bitstream for large inputs.
+
+**Phase 8: Container Formats & Top Level API**
+-   [ ] **Task 62: Port `CRC` (for Gzip)**
+    -   [ ] Implement CRC32 or use a Rust crate.
+    -   [ ] Test: Compare CRC value for known sequences.
+-   [ ] **Task 63: Port `ZopfliGzipCompress`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare entire Gzip output byte-for-byte.
+-   [ ] **Task 64: Port `adler32` (for Zlib)**
+    -   [ ] Implement Adler-32 or use a Rust crate.
+    -   [ ] Test: Compare Adler-32 value for known sequences.
+-   [ ] **Task 65: Port `ZopfliZlibCompress`**
+    -   [ ] Implement Rust function.
+    -   [ ] Test: Compare entire Zlib output byte-for-byte.
+-   [ ] **Task 66: Port `ZopfliFormat` enum**
+    -   [ ] Define enum in Rust.
+    -   [ ] Test: N/A (used by `ZopfliCompress`).
+-   [ ] **Task 67: Port `ZopfliCompress`**
+    -   [ ] Implement top-level Rust API function.
+    -   [ ] Test: Compare output with C for different `ZopfliFormat` options (final integration).

@@ -1,0 +1,5 @@
+target/
+obj/
+# fuzz
+corpus/
+artifacts/
