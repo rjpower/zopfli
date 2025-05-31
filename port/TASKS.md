@@ -110,30 +110,30 @@ Here's the Zopfli C to Rust porting task list as a Markdown checklist:
     -   [x] Test: Compare entire output `ZopfliLZ77Store`.
 
 **Phase 5: Squeeze (Optimal LZ77)**
--   [ ] **Task 32: Port `SymbolStats` struct and its utility functions**
-    -   [ ] Define `SymbolStats` struct.
-    -   [ ] Port `InitStats`, `CopyStats`, `AddWeighedStatFreqs`.
-    -   [ ] Port `RandomizeFreqs`, `RandomizeStatFreqs` (and `RanState`).
-    -   [ ] Port `ClearStatFreqs`, `CalculateStatistics`, `GetStatistics`.
-    -   [ ] Test: For each function, compare output `SymbolStats` struct state.
--   [ ] **Task 33: Port `CostModelFun` and implementations (`GetCostFixed`, `GetCostStat`)**
-    -   [ ] Define Rust equivalents (closures/traits).
-    -   [ ] Test: Compare returned `double` cost with tolerance.
--   [ ] **Task 34: Port `GetBestLengths` (Dynamic Programming Core)**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare `length_array` and `costs` array (costs with tolerance).
--   [ ] **Task 35: Port `TraceBackwards`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare output `path` array.
--   [ ] **Task 36: Port `FollowPath`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare output `ZopfliLZ77Store`.
--   [ ] **Task 37: Port `ZopfliLZ77OptimalFixed`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare output `ZopfliLZ77Store`.
--   [ ] **Task 38: Port `ZopfliLZ77Optimal`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare final output `ZopfliLZ77Store`.
+-   [x] **Task 32: Port `SymbolStats` struct and its utility functions**
+    -   [x] Define `SymbolStats` struct.
+    -   [x] Port `InitStats`, `CopyStats`, `AddWeighedStatFreqs`.
+    -   [x] Port `RandomizeFreqs`, `RandomizeStatFreqs` (and `RanState`).
+    -   [x] Port `ClearStatFreqs`, `CalculateStatistics`, `GetStatistics`.
+    -   [x] Test: For each function, compare output `SymbolStats` struct state.
+-   [x] **Task 33: Port `CostModelFun` and implementations (`GetCostFixed`, `GetCostStat`)**
+    -   [x] Define Rust equivalents (closures/traits).
+    -   [x] Test: Compare returned `double` cost with tolerance.
+-   [x] **Task 34: Port `GetBestLengths` (Dynamic Programming Core)**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `length_array` and `costs` array (costs with tolerance).
+-   [x] **Task 35: Port `TraceBackwards`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare output `path` array.
+-   [x] **Task 36: Port `FollowPath`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare output `ZopfliLZ77Store`.
+-   [x] **Task 37: Port `ZopfliLZ77OptimalFixed`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare output `ZopfliLZ77Store`.
+-   [x] **Task 38: Port `ZopfliLZ77Optimal`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare final output `ZopfliLZ77Store`.
 
 **Phase 6: Block Splitting**
 -   [ ] **Task 39: Port `EstimateCost` helper (via `ZopfliCalculateBlockSizeAutoType`)**
