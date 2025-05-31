@@ -25,6 +25,7 @@ fn main() {
     println!("cargo:rerun-if-changed=../src/zopfli/blocksplitter.h");
     
     Build::new()
+        .flag("-Wno-unused-function")
         .file("src/symbols_wrapper.c")
         .file("src/lz77_store_wrapper.c")
         .file("../src/zopfli/util.c")

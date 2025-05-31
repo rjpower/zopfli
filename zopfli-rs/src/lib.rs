@@ -9,3 +9,4 @@ pub mod lz77;
 pub mod squeeze;
 pub mod util;
 pub mod blocksplitter;
+pub mod deflate;

@@ -9,9 +9,6 @@ use crate::lz77::ZopfliBlockState;
 /// tree and the size to encode all literal, length and distance symbols and their
 /// extra bits.
 fn estimate_cost(lz77: &ZopfliLZ77Store, lstart: usize, lend: usize) -> f64 {
-    // For now, we need to route this to the C implementation since we haven't
-    // ported the deflate module yet. This will be replaced with the Rust implementation
-    // once deflate.rs is available.
     #[cfg(feature = "c-fallback")]
     unsafe {
         // We need to create a temporary C store that owns the data
@@ -45,8 +42,8 @@ fn estimate_cost(lz77: &ZopfliLZ77Store, lstart: usize, lend: usize) -> f64 {
     
     #[cfg(not(feature = "c-fallback"))]
     {
-        // This will be implemented when deflate.rs is ported
-        todo!("Deflate module not yet ported - calculate_block_size_auto_type needs implementation")
+        // Use the Rust implementation
+        crate::deflate::calculate_block_size_auto_type(lz77, lstart, lend)
     }
 }
 

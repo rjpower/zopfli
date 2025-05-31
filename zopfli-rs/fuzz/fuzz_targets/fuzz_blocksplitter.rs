@@ -66,10 +66,10 @@ fuzz_target!(|data: &[u8]| {
 
             #[cfg(not(feature = "c-fallback"))]
             {
-                // Test that these don't panic (they might return empty or todo!())
-                let _result = std::panic::catch_unwind(|| {
-                    zopfli::bridge::block_split(&options, data, instart, inend, maxblocks)
-                });
+                // Now that deflate is implemented, test actual block splitting
+                let rust_result = zopfli::bridge::block_split(&options, data, instart, inend, maxblocks);
+                assert!(rust_result.iter().all(|&x| x >= instart && x < inend));
+                assert!(rust_result.len() <= maxblocks.saturating_sub(1));
             }
         }
     }

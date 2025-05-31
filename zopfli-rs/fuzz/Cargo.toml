@@ -63,3 +63,9 @@ name = "fuzz_blocksplitter"
 path = "fuzz_targets/fuzz_blocksplitter.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_deflate"
+path = "fuzz_targets/fuzz_deflate.rs"
+test = false
+doc = false

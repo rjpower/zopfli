@@ -154,13 +154,32 @@ Here's the Zopfli C to Rust porting task list as a Markdown checklist:
     -   [ ] Implement Rust function.
     -   [ ] Test: Compare `splitpoints` and `npoints`.
 
-**Phase 7: DEFLATE Encoding Logic**
--   [ ] **Task 45: Port Bit-writing functions (`AddBit`, `AddBits`, `AddHuffmanBits`)**
-    -   [ ] Implement Rust bitstream writer.
-    -   [ ] Test: Compare resulting byte array and final bit pointer.
--   [ ] **Task 46: Port `PatchDistanceCodesForBuggyDecoders`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare modified `d_lengths` array.
+**Phase 7: DEFLATE Encoding Logic (Phase 7A - Minimum Viable Implementation)**
+-   [x] **Task 45: Port Bit-writing functions (`AddBit`, `AddBits`, `AddHuffmanBits`)**
+    -   [x] Implement Rust bitstream writer.
+    -   [x] Test: Compare resulting byte array and final bit pointer.
+-   [x] **Task 46: Port `PatchDistanceCodesForBuggyDecoders`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare modified `d_lengths` array.
+-   [x] **Task 51: Port `GetFixedTree`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `ll_lengths` and `d_lengths` arrays.
+-   [x] **Task 52: Port `CalculateBlockSymbolSize` (and helpers)**
+    -   [x] Implement `CalculateBlockSymbolSizeSmall`, `GivenCounts`, then main func.
+    -   [x] Test: Compare returned `double` size with tolerance.
+-   [x] **Task 54: Port `GetDynamicLengths` (simplified)**
+    -   [x] Implement Rust function with simplified tree size calculation.
+    -   [x] Test: Compare output arrays and returned cost with tolerance.
+-   [x] **Task 55: Port `ZopfliCalculateBlockSize`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare returned `double` size with tolerance.
+-   [x] **Task 56: Port `ZopfliCalculateBlockSizeAutoType`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare returned `double` size with tolerance.
+
+**Phase 7A COMPLETE** - Block splitting no longer uses `todo!()` and works in pure Rust mode.
+
+**Phase 7B: Complete DEFLATE Implementation (Future)**
 -   [ ] **Task 47: Port `EncodeTree` (and RLE logic)**
     -   [ ] Implement Rust function.
     -   [ ] Test: Compare output bitstream and size (for `size_only` path).
@@ -173,24 +192,9 @@ Here's the Zopfli C to Rust porting task list as a Markdown checklist:
 -   [ ] **Task 50: Port `AddLZ77Data`**
     -   [ ] Implement Rust function.
     -   [ ] Test: Compare output bitstream.
--   [ ] **Task 51: Port `GetFixedTree`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare `ll_lengths` and `d_lengths` arrays.
--   [ ] **Task 52: Port `CalculateBlockSymbolSize` (and helpers)**
-    -   [ ] Implement `CalculateBlockSymbolSizeSmall`, `GivenCounts`, then main func.
-    -   [ ] Test: Compare returned `double` size with tolerance.
 -   [ ] **Task 53: Port `OptimizeHuffmanForRle` and `TryOptimizeHuffmanForRle`**
     -   [ ] Implement Rust functions.
     -   [ ] Test: Compare modified arrays and returned cost with tolerance.
--   [ ] **Task 54: Port `GetDynamicLengths`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare output arrays and returned cost with tolerance.
--   [ ] **Task 55: Port `ZopfliCalculateBlockSize`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare returned `double` size with tolerance.
--   [ ] **Task 56: Port `ZopfliCalculateBlockSizeAutoType`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare returned `double` size with tolerance.
 -   [ ] **Task 57: Port `AddNonCompressedBlock`**
     -   [ ] Implement Rust function.
     -   [ ] Test: Compare output bitstream.

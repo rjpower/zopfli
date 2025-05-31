@@ -548,3 +548,80 @@ pub fn block_split_simple(
         crate::blocksplitter::block_split_simple(input, instart, inend, blocksize)
     }
 }
+
+/// Calculate block size in bits for a specific block type
+pub fn calculate_block_size(
+    lz77: &crate::lz77::ZopfliLZ77Store,
+    lstart: usize,
+    lend: usize,
+    btype: i32
+) -> f64 {
+    #[cfg(feature = "c-fallback")]
+    unsafe {
+        // Convert Rust store to C store
+        let litlens: Vec<u16> = lz77.litlens().to_vec();
+        let dists: Vec<u16> = lz77.dists().to_vec();
+        let pos: Vec<usize> = lz77.pos().to_vec();
+        let ll_symbol: Vec<u16> = lz77.ll_symbol().to_vec();
+        let d_symbol: Vec<u16> = lz77.d_symbol().to_vec();
+        let ll_counts: Vec<usize> = lz77.ll_counts().to_vec();
+        let d_counts: Vec<usize> = lz77.d_counts().to_vec();
+        
+        let c_store = crate::ffi::ZopfliLZ77StoreC {
+            litlens: litlens.as_ptr() as *mut u16,
+            dists: dists.as_ptr() as *mut u16,
+            size: lz77.size(),
+            data: lz77.data().as_ptr(),
+            pos: pos.as_ptr() as *mut usize,
+            ll_symbol: ll_symbol.as_ptr() as *mut u16,
+            d_symbol: d_symbol.as_ptr() as *mut u16,
+            ll_counts: ll_counts.as_ptr() as *mut usize,
+            d_counts: d_counts.as_ptr() as *mut usize,
+        };
+        
+        crate::ffi::deflate::calculate_block_size(&c_store as *const _, lstart, lend, btype)
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::deflate::calculate_block_size(lz77, lstart, lend, btype)
+    }
+}
+
+/// Calculate block size automatically choosing the best block type
+pub fn calculate_block_size_auto_type(
+    lz77: &crate::lz77::ZopfliLZ77Store,
+    lstart: usize,
+    lend: usize
+) -> f64 {
+    #[cfg(feature = "c-fallback")]
+    unsafe {
+        // Convert Rust store to C store
+        let litlens: Vec<u16> = lz77.litlens().to_vec();
+        let dists: Vec<u16> = lz77.dists().to_vec();
+        let pos: Vec<usize> = lz77.pos().to_vec();
+        let ll_symbol: Vec<u16> = lz77.ll_symbol().to_vec();
+        let d_symbol: Vec<u16> = lz77.d_symbol().to_vec();
+        let ll_counts: Vec<usize> = lz77.ll_counts().to_vec();
+        let d_counts: Vec<usize> = lz77.d_counts().to_vec();
+        
+        let c_store = crate::ffi::ZopfliLZ77StoreC {
+            litlens: litlens.as_ptr() as *mut u16,
+            dists: dists.as_ptr() as *mut u16,
+            size: lz77.size(),
+            data: lz77.data().as_ptr(),
+            pos: pos.as_ptr() as *mut usize,
+            ll_symbol: ll_symbol.as_ptr() as *mut u16,
+            d_symbol: d_symbol.as_ptr() as *mut u16,
+            ll_counts: ll_counts.as_ptr() as *mut usize,
+            d_counts: d_counts.as_ptr() as *mut usize,
+        };
+        
+        crate::ffi::deflate::calculate_block_size_auto_type(&c_store as *const _, lstart, lend)
+    }
+    
+    #[cfg(not(feature = "c-fallback"))]
+    {
+        crate::deflate::calculate_block_size_auto_type(lz77, lstart, lend)
+    }
+}
