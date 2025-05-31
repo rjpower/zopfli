@@ -30,7 +30,7 @@ zopfli/
 2. **Test exhaustively**: Use both comprehensive unit tests and fuzzing
 3. **Handle C quirks**: inline functions need wrappers, watch for integer overflow edge cases
 4. **Keep it simple**: Don't build infrastructure you don't need yet
-
+5. Don't include COPYRIGHT headers!
 
 ## Step-by-Step Porting Process
 
@@ -41,12 +41,20 @@ First, understand what you're porting:
 - Identify dependencies (other functions/structs it uses)
 - Note any macros or constants used
 - Check for platform-specific code or undefined behavior
+- **Look for conditional compilation** (`#ifdef` blocks) and check @port/CODEBASE_ANALYSIS.md for which flags are active
+- **Identify complex algorithms** that may have edge cases (anything with loops, recursion, or assertions)
 
 Example findings for `ZopfliGetDistExtraBits`:
 - Static inline function in `symbols.h`
 - Uses `__builtin_clz` (maps to `leading_zeros()` in Rust)
 - Takes `int`, returns `int`
 - No dependencies on other functions
+
+Example findings for `ZopfliHash`:
+- Regular exported functions, no wrappers needed
+- Multiple conditional compilation blocks (`ZOPFLI_HASH_SAME`, `ZOPFLI_HASH_SAME_HASH`)
+- Complex state with multiple arrays and rolling hash algorithm
+- Requires careful bounds checking and window size management
 
 ### Handle Static Inline Functions
 
@@ -222,12 +230,17 @@ doc = false
    cargo test -- --nocapture
    ```
 
-2. Run fuzzer:
+2. **Run fuzzer EARLY and for complex functions**: 
    ```bash
-   cd fuzz && cargo +nightly fuzz run fuzz_symbols -- -max_total_time=10
+   cd fuzz && cargo +nightly fuzz run fuzz_symbols -- -max_total_time=30
    ```
+   
+3. For complex structs/algorithms, run fuzzer for longer (e.g., 60+ seconds)
 
-3. If fuzzer finds issues, fix them (e.g., the `i32::MIN` case)
+4. If fuzzer finds issues:
+   - **Document the edge case** in comments
+   - **Handle gracefully** rather than asserting  
+   - **Test the fix** with specific unit tests
 
 ## Common Pitfalls and Solutions
 
@@ -235,12 +248,74 @@ doc = false
 **Problem**: Can't link directly to static inline C functions  
 **Solution**: Create wrapper functions in a `.c` file
 
+### 2. Conditional Compilation Complexity
+**Problem**: C code has many `#ifdef` blocks that are hard to understand  
+**Solution**: Check @port/CODEBASE_ANALYSIS.md which documents which flags are assumed active
+
+### 3. Edge Cases in Assertions
+**Problem**: C code has assertions that may fail on edge cases (like distance-0 in caches)  
+**Solution**: Run fuzzing early to discover edge cases, then handle them gracefully
+
+### 4. Complex Struct Memory Layout  
+**Problem**: C structs with conditional fields or complex allocation patterns  
+**Solution**: Always include ALL fields in Rust structs, even if conditionally compiled in C
+
+### 5. Debugging Assertion Failures
+**Problem**: Hard to understand why assertions fail in complex algorithms  
+**Solution**: 
+- Use `debug_assert!` instead of `assert!` for performance-critical code
+- Add detailed error messages with context
+- Consider making assertions conditional when edge cases are acceptable
+
 ## When to Expand
 
 Only add infrastructure when you actually need it:
 - Add `types.rs` when porting structs
 - Add `options.rs` when porting functions that use `ZopfliOptions`
 - Add compression infrastructure only when porting compression functions
+
+## Complex Struct Porting Strategy
+
+For structs with many fields and complex behavior (like `ZopfliHash`, `ZopfliLongestMatchCache`):
+
+### 1. Start with Complete Struct Definition
+```rust
+// Include ALL fields, even those conditionally compiled in C
+#[derive(Debug)]  // Always add Debug for easier debugging
+pub struct ZopfliHash {
+    // All main fields
+    head: Vec<i32>,
+    prev: Vec<u16>,
+    // All conditional compilation fields  
+    head2: Vec<i32>,  // ZOPFLI_HASH_SAME_HASH
+    same: Vec<u16>,   // ZOPFLI_HASH_SAME
+}
+```
+
+### 2. Implement Core Methods First
+- `new()` - Constructor with proper initialization
+- `Drop` - Automatic cleanup (usually just `Vec` drop)
+- Basic operations without complex logic
+
+### 3. Add Complex Methods Incrementally  
+- Implement one method at a time
+- **Write unit tests for each method**
+- **Run fuzzer after each complex method**
+
+### 4. FFI Integration Last
+- Add `#[repr(C)]` struct definitions
+- Create bridge structs that handle both C and Rust
+- Test FFI integration separately
+
+### 5. Handle Edge Cases Discovered by Fuzzing
+- **Document edge cases** in code comments
+- Make assertions conditional when appropriate:
+```rust
+// Handle edge case where all distances are 0
+if self.max_cached_sublen(pos, length) > 0 {
+    debug_assert_eq!(bestlength, self.max_cached_sublen(pos, length));
+}
+```
 
 
 ## Example: Complete Minimal Port
@@ -255,8 +330,6 @@ For `ZopfliGetDistExtraBits`, the complete implementation consists of:
 8. `fuzz/fuzz_targets/fuzz_dist_extra_bits.rs` - ~20 lines
 
 Total: ~130 lines of code to safely port and verify one function.
-
-Remember: Start small, test thoroughly, expand only as needed.
 
 ### Fixing bugs
 

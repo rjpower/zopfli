@@ -74,40 +74,40 @@ Here's the Zopfli C to Rust porting task list as a Markdown checklist:
     -   [x] Test: Compare reconstructed `sublen_out` array.
 
 **Phase 4: LZ77 Store and Operations**
--   [ ] **Task 22: Port `ZopfliLZ77Store` struct and its lifecycle functions**
-    -   [ ] Define `ZopfliLZ77Store` struct in Rust.
-    -   [ ] Implement `new()`.
-    -   [ ] Implement `Drop`.
-    -   [ ] Test: Check initial state.
--   [ ] **Task 23: Port `ZopfliStoreLitLenDist`**
-    -   [ ] Implement Rust method for `ZopfliLZ77Store`.
-    -   [ ] Test: Compare store fields after adding items.
--   [ ] **Task 24: Port `ZopfliCopyLZ77Store`**
-    -   [ ] Implement `Clone` or `copy` method for `ZopfliLZ77Store`.
-    -   [ ] Test: Compare all fields of original and copied store.
--   [ ] **Task 25: Port `ZopfliAppendLZ77Store`**
-    -   [ ] Implement Rust method for `ZopfliLZ77Store`.
-    -   [ ] Test: Compare target store contents after append.
--   [ ] **Task 26: Port `ZopfliLZ77GetByteRange`**
-    -   [ ] Implement Rust method for `ZopfliLZ77Store`.
-    -   [ ] Test: Compare return value for a known store segment.
--   [ ] **Task 27: Port `ZopfliLZ77GetHistogram` (and `ZopfliLZ77GetHistogramAt`)**
-    -   [ ] Implement Rust method and its helper.
-    -   [ ] Test: Compare `ll_counts` and `d_counts` arrays for a known store.
--   [ ] **Task 28: Port `ZopfliBlockState` struct and its lifecycle functions**
-    -   [ ] Define `ZopfliBlockState` struct in Rust.
-    -   [ ] Implement `new()`.
-    -   [ ] Implement `Drop`.
-    -   [ ] Test: Check initial field values and LMC state.
--   [ ] **Task 29: Port `ZopfliVerifyLenDist`**
-    -   [ ] Implement as `debug_assert!` based function.
-    -   [ ] Test: Ensure asserts trigger/pass correctly.
--   [ ] **Task 30: Port `ZopfliFindLongestMatch` (and `GetMatch`)**
-    -   [ ] Implement Rust function and helper.
-    -   [ ] Test: Compare `distance`, `length`, and `sublen` (if used) output. Test LMC.
--   [ ] **Task 31: Port `ZopfliLZ77Greedy` (and `GetLengthScore`)**
-    -   [ ] Implement Rust function and helper.
-    -   [ ] Test: Compare entire output `ZopfliLZ77Store`.
+-   [x] **Task 22: Port `ZopfliLZ77Store` struct and its lifecycle functions**
+    -   [x] Define `ZopfliLZ77Store` struct in Rust.
+    -   [x] Implement `new()`.
+    -   [x] Implement `Drop`.
+    -   [x] Test: Check initial state.
+-   [x] **Task 23: Port `ZopfliStoreLitLenDist`**
+    -   [x] Implement Rust method for `ZopfliLZ77Store`.
+    -   [x] Test: Compare store fields after adding items.
+-   [x] **Task 24: Port `ZopfliCopyLZ77Store`**
+    -   [x] Implement `Clone` or `copy` method for `ZopfliLZ77Store`.
+    -   [x] Test: Compare all fields of original and copied store.
+-   [x] **Task 25: Port `ZopfliAppendLZ77Store`**
+    -   [x] Implement Rust method for `ZopfliLZ77Store`.
+    -   [x] Test: Compare target store contents after append.
+-   [x] **Task 26: Port `ZopfliLZ77GetByteRange`**
+    -   [x] Implement Rust method for `ZopfliLZ77Store`.
+    -   [x] Test: Compare return value for a known store segment.
+-   [x] **Task 27: Port `ZopfliLZ77GetHistogram` (and `ZopfliLZ77GetHistogramAt`)**
+    -   [x] Implement Rust method and its helper.
+    -   [x] Test: Compare `ll_counts` and `d_counts` arrays for a known store.
+-   [x] **Task 28: Port `ZopfliBlockState` struct and its lifecycle functions**
+    -   [x] Define `ZopfliBlockState` struct in Rust.
+    -   [x] Implement `new()`.
+    -   [x] Implement `Drop`.
+    -   [x] Test: Check initial field values and LMC state.
+-   [x] **Task 29: Port `ZopfliVerifyLenDist`**
+    -   [x] Implement as `debug_assert!` based function.
+    -   [x] Test: Ensure asserts trigger/pass correctly.
+-   [x] **Task 30: Port `ZopfliFindLongestMatch` (and `GetMatch`)**
+    -   [x] Implement Rust function and helper.
+    -   [x] Test: Compare `distance`, `length`, and `sublen` (if used) output. Test LMC.
+-   [x] **Task 31: Port `ZopfliLZ77Greedy` (and `GetLengthScore`)**
+    -   [x] Implement Rust function and helper.
+    -   [x] Test: Compare entire output `ZopfliLZ77Store`.
 
 **Phase 5: Squeeze (Optimal LZ77)**
 -   [ ] **Task 32: Port `SymbolStats` struct and its utility functions**

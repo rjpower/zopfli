@@ -187,6 +187,89 @@ pub struct XmlParserInput {
 - Memory sanitizers may not detect these issues immediately
 - The corruption can be intermittent and hard to reproduce
 
+# Handling Conditional Compilation (`#ifdef` blocks)
+
+C code often has complex conditional compilation. For Zopfli, check @port/CODEBASE_ANALYSIS.md which documents assumed active flags.
+
+## Strategy: Include All Fields
+
+**Always include ALL fields in Rust structs**, even those conditionally compiled in C:
+
+```rust
+// C struct with conditional compilation:
+// typedef struct ZopfliHash {
+//   int* head;
+// #ifdef ZOPFLI_HASH_SAME_HASH  
+//   int* head2;
+// #endif
+// #ifdef ZOPFLI_HASH_SAME
+//   unsigned short* same;
+// #endif
+// } ZopfliHash;
+
+// Rust equivalent - include ALL fields:
+#[repr(C)]
+pub struct ZopfliHashC {
+    head: *mut c_int,
+    head2: *mut c_int,     // Include even if conditionally compiled  
+    same: *mut u16,        // Include even if conditionally compiled
+}
+```
+
+**Why this works:**
+- Zopfli assumes all optimization flags are enabled in production
+- Including all fields ensures memory layout compatibility
+- Simpler than conditional compilation in Rust
+
+# Memory Management Patterns
+
+## Replace Manual Allocation with Vec
+
+**C Pattern:**
+```c
+void ZopfliAllocHash(size_t window_size, ZopfliHash* h) {
+  h->head = (int*)malloc(sizeof(*h->head) * 65536);
+  h->prev = (unsigned short*)malloc(sizeof(*h->prev) * window_size);
+}
+
+void ZopfliCleanHash(ZopfliHash* h) {
+  free(h->head);
+  free(h->prev);
+}
+```
+
+**Rust Pattern:**
+```rust
+impl ZopfliHash {
+    pub fn new(window_size: usize) -> Self {
+        ZopfliHash {
+            head: vec![-1; 65536],              // Initialize with default values
+            prev: (0..window_size).map(|i| i as u16).collect(),  // Initialize with sequence
+        }
+    }
+    // Drop is automatic for Vec
+}
+```
+
+## Bridge Pattern for C/Rust Compatibility
+
+For complex structs that need both C and Rust interfaces:
+
+```rust
+pub struct ZopfliHashBridge {
+    #[cfg(feature = "c-fallback")]
+    c_hash: Box<crate::ffi::ZopfliHashC>,
+    #[cfg(not(feature = "c-fallback"))]
+    rust_hash: crate::hash::ZopfliHash,
+}
+
+impl ZopfliHashBridge {
+    pub fn new(window_size: usize) -> Self {
+        // Route to C or Rust implementation based on feature flags
+    }
+}
+```
+
 # Porting, Building, Testing, and Debugging.
 
 When porting a module, follow these steps:
