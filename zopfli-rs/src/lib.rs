@@ -1,5 +1,4 @@
 pub mod ffi;
-pub mod bridge;
 pub mod options;
 pub mod symbols;
 pub mod tree;
@@ -11,3 +10,6 @@ pub mod util;
 pub mod blocksplitter;
 pub mod deflate;
 pub mod deflate_debug;
+pub mod gzip_container;
+pub mod zlib_container;
+pub mod zopfli;

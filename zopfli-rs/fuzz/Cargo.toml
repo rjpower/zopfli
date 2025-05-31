@@ -78,3 +78,21 @@ name = "fuzz_deflate"
 path = "fuzz_targets/fuzz_deflate.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_gzip_container"
+path = "fuzz_targets/fuzz_gzip_container.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_zlib_container"
+path = "fuzz_targets/fuzz_zlib_container.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_zopfli_compress"
+path = "fuzz_targets/fuzz_zopfli_compress.rs"
+test = false
+doc = false

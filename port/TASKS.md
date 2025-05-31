@@ -1,19 +1,19 @@
 **Phase 8: Container Formats & Top Level API**
--   [ ] **Task 62: Port `CRC` (for Gzip)**
-    -   [ ] Implement CRC32 or use a Rust crate.
-    -   [ ] Test: Compare CRC value for known sequences.
--   [ ] **Task 63: Port `ZopfliGzipCompress`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare entire Gzip output byte-for-byte.
--   [ ] **Task 64: Port `adler32` (for Zlib)**
-    -   [ ] Implement Adler-32 or use a Rust crate.
-    -   [ ] Test: Compare Adler-32 value for known sequences.
--   [ ] **Task 65: Port `ZopfliZlibCompress`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare entire Zlib output byte-for-byte.
--   [ ] **Task 66: Port `ZopfliFormat` enum**
-    -   [ ] Define enum in Rust.
-    -   [ ] Test: N/A (used by `ZopfliCompress`).
--   [ ] **Task 67: Port `ZopfliCompress`**
-    -   [ ] Implement top-level Rust API function.
-    -   [ ] Test: Compare output with C for different `ZopfliFormat` options (final integration).
+-   [x] **Task 62: Port `CRC` (for Gzip)**
+    -   [x] Implement CRC32 or use a Rust crate.
+    -   [x] Test: Compare CRC value for known sequences.
+-   [x] **Task 63: Port `ZopfliGzipCompress`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare entire Gzip output byte-for-byte.
+-   [x] **Task 64: Port `adler32` (for Zlib)**
+    -   [x] Implement Adler-32 or use a Rust crate.
+    -   [x] Test: Compare Adler-32 value for known sequences.
+-   [x] **Task 65: Port `ZopfliZlibCompress`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare entire Zlib output byte-for-byte.
+-   [x] **Task 66: Port `ZopfliFormat` enum**
+    -   [x] Define enum in Rust.
+    -   [x] Test: N/A (used by `ZopfliCompress`).
+-   [x] **Task 67: Port `ZopfliCompress`**
+    -   [x] Implement top-level Rust API function.
+    -   [x] Test: Compare output with C for different `ZopfliFormat` options (final integration).

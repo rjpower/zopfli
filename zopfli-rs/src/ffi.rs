@@ -225,6 +225,45 @@ extern "C" {
     pub fn ZopfliLZ77StoreGetDist(store: *const ZopfliLZ77StoreC, index: usize) -> c_ushort;
     pub fn ZopfliLZ77StoreGetPos(store: *const ZopfliLZ77StoreC, index: usize) -> usize;
 
+    // Container format functions
+    pub fn ZopfliGzipCompress(
+        options: *const ZopfliOptions,
+        input: *const c_uchar,
+        insize: usize,
+        out: *mut *mut c_uchar,
+        outsize: *mut usize
+    );
+
+    pub fn ZopfliZlibCompress(
+        options: *const ZopfliOptions,
+        input: *const c_uchar,
+        insize: usize,
+        out: *mut *mut c_uchar,
+        outsize: *mut usize
+    );
+
+    // Top-level compression function
+    pub fn ZopfliCompress(
+        options: *const ZopfliOptions,
+        output_type: c_int,  // ZopfliFormat enum
+        input: *const c_uchar,
+        insize: usize,
+        out: *mut *mut c_uchar,
+        outsize: *mut usize
+    );
+
+    // Deflate function (used by containers)
+    pub fn ZopfliDeflate(
+        options: *const ZopfliOptions,
+        btype: c_int,
+        final_block: c_int,
+        input: *const c_uchar,
+        insize: usize,
+        bp: *mut c_uchar,
+        out: *mut *mut c_uchar,
+        outsize: *mut usize
+    );
+
 }
 
 // Convenience wrappers for the symbol functions
