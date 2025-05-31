@@ -1,4 +1,4 @@
-use std::os::raw::{c_int, c_double};
+use std::os::raw::{c_int, c_double, c_uchar, c_ushort};
 use crate::options::ZopfliOptions;
 
 // C struct definitions for FFI
@@ -23,6 +23,15 @@ pub struct ZopfliLongestMatchCacheC {
     length: *mut u16,
     dist: *mut u16,
     sublen: *mut u8,
+}
+
+#[repr(C)]
+pub struct ZopfliBlockStateC {
+    options: *const ZopfliOptions,
+    // ZOPFLI_LONGEST_MATCH_CACHE field
+    lmc: *mut ZopfliLongestMatchCacheC,
+    blockstart: usize,
+    blockend: usize,
 }
 
 #[cfg(feature = "c-fallback")]
@@ -81,6 +90,39 @@ extern "C" {
     pub fn ZopfliSublenToCache(sublen: *const u16, pos: usize, length: usize, lmc: *mut ZopfliLongestMatchCacheC);
     pub fn ZopfliCacheToSublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize, sublen: *mut u16);
     pub fn ZopfliMaxCachedSublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize) -> u32;
+
+    // BlockState functions
+    pub fn ZopfliInitBlockState(
+        options: *const ZopfliOptions,
+        blockstart: usize,
+        blockend: usize,
+        add_lmc: c_int,
+        s: *mut ZopfliBlockStateC
+    );
+    
+    pub fn ZopfliCleanBlockState(s: *mut ZopfliBlockStateC);
+    
+    // LZ77 functions - the actual C implementation
+    pub fn ZopfliFindLongestMatch(
+        s: *mut ZopfliBlockStateC,
+        h: *const ZopfliHashC,
+        array: *const c_uchar,
+        pos: usize,
+        size: usize,
+        limit: usize,
+        sublen: *mut c_ushort,
+        distance: *mut c_ushort,
+        length: *mut c_ushort
+    );
+    
+    pub fn ZopfliVerifyLenDist(
+        data: *const c_uchar,
+        datasize: usize,
+        pos: usize,
+        dist: c_ushort,
+        length: c_ushort
+    );
+
 }
 
 // Convenience wrappers for the symbol functions
@@ -246,3 +288,4 @@ pub mod cache {
         ZopfliMaxCachedSublen(lmc, pos, length)
     }
 }
+

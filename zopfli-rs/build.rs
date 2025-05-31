@@ -15,6 +15,8 @@ fn main() {
     println!("cargo:rerun-if-changed=../src/zopfli/hash.h");
     println!("cargo:rerun-if-changed=../src/zopfli/cache.c");
     println!("cargo:rerun-if-changed=../src/zopfli/cache.h");
+    println!("cargo:rerun-if-changed=../src/zopfli/lz77.c");
+    println!("cargo:rerun-if-changed=../src/zopfli/lz77.h");
     
     Build::new()
         .file("src/symbols_wrapper.c")
@@ -23,6 +25,7 @@ fn main() {
         .file("../src/zopfli/katajainen.c")
         .file("../src/zopfli/hash.c")
         .file("../src/zopfli/cache.c")
+        .file("../src/zopfli/lz77.c")
         .include("../src/zopfli")
         .compile("zopfli_c");
 }
