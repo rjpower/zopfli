@@ -136,23 +136,23 @@ Here's the Zopfli C to Rust porting task list as a Markdown checklist:
     -   [x] Test: Compare final output `ZopfliLZ77Store`.
 
 **Phase 6: Block Splitting**
--   [ ] **Task 39: Port `EstimateCost` helper (via `ZopfliCalculateBlockSizeAutoType`)**
-    -   [ ] Note: Integrated into `ZopfliCalculateBlockSizeAutoType` port.
--   [ ] **Task 40: Port `FindMinimum` helper (and its callback infrastructure)**
-    -   [ ] Implement `FindMinimum` and callback in Rust.
-    -   [ ] Test: Compare returned index and `smallest` value with tolerance.
--   [ ] **Task 41: Port `AddSorted` helper**
-    -   [ ] Implement Rust logic for `Vec<usize>`.
-    -   [ ] Test: Verify sorted property after adds.
--   [ ] **Task 42: Port `ZopfliBlockSplitLZ77`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare `splitpoints` array and `npoints`.
--   [ ] **Task 43: Port `ZopfliBlockSplit`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare `splitpoints` (byte offsets) and `npoints`.
--   [ ] **Task 44: Port `ZopfliBlockSplitSimple`**
-    -   [ ] Implement Rust function.
-    -   [ ] Test: Compare `splitpoints` and `npoints`.
+-   [x] **Task 39: Port `EstimateCost` helper (via `ZopfliCalculateBlockSizeAutoType`)**
+    -   [x] Note: Integrated into `ZopfliCalculateBlockSizeAutoType` port.
+-   [x] **Task 40: Port `FindMinimum` helper (and its callback infrastructure)**
+    -   [x] Implement `FindMinimum` and callback in Rust.
+    -   [x] Test: Compare returned index and `smallest` value with tolerance.
+-   [x] **Task 41: Port `AddSorted` helper**
+    -   [x] Implement Rust logic for `Vec<usize>`.
+    -   [x] Test: Verify sorted property after adds.
+-   [x] **Task 42: Port `ZopfliBlockSplitLZ77`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `splitpoints` array and `npoints`.
+-   [x] **Task 43: Port `ZopfliBlockSplit`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `splitpoints` (byte offsets) and `npoints`.
+-   [x] **Task 44: Port `ZopfliBlockSplitSimple`**
+    -   [x] Implement Rust function.
+    -   [x] Test: Compare `splitpoints` and `npoints`.
 
 **Phase 7: DEFLATE Encoding Logic (Phase 7A - Minimum Viable Implementation)**
 -   [x] **Task 45: Port Bit-writing functions (`AddBit`, `AddBits`, `AddHuffmanBits`)**
