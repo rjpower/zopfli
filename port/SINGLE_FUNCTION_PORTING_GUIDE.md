@@ -4,7 +4,7 @@ This guide provides practical instructions for porting a single function or
 struct from the Zopfli C codebase to Rust.
 
 You will be given one or more tasks from @port/TASKS.md.
-MARK TASKS AS COMPLETED WHEN YOU HAVE COMPLETED THE PORTING.
+
 
 ## Project Structure Overview
 
@@ -22,8 +22,6 @@ zopfli/
 │   ├── fuzz/
 │   │   └── fuzz_targets/
 │   │       └── fuzz_*.rs # One fuzz target per function
-│   └── tests/
-│       └── test_*.rs    # Exhaustive comparison tests
 ```
 
 ## Key Principles
@@ -65,7 +63,7 @@ int zopfli_get_dist_extra_bits_wrapper(int dist) {
 }
 ```
 
-Update `build.rs` to compile only what you need:
+Update `build.rs` as needed:
 ```rust
 // build.rs
 #[cfg(feature = "c-fallback")]
@@ -84,7 +82,7 @@ fn main() {
 
 ### 2. Create FFI Bindings
 
-Keep FFI minimal - only declare what you need:
+Declare the C functions or structures you need for your task in `src/ffi.rs`.
 
 ```rust
 // src/ffi.rs
@@ -108,8 +106,9 @@ pub mod symbols {
 
 ### 3. Implement the Rust Version
 
-Create a focused implementation, with a goal of being as close to the C implementation as possible.
-Follow the guidelines from @port/RUST_PORTING.md for how to write good Rust code.
+Create a focused implementation, with a goal of being as close to the C
+implementation as possible.  Follow the guidelines from @port/RUST_PORTING.md
+for how to write good Rust code.
 
 ```rust
 // src/symbols.rs
@@ -126,7 +125,6 @@ pub fn get_dist_extra_bits(dist: i32) -> i32 {
 ```
 
 Key mappings:
-- `__builtin_clz(x)` → `x.leading_zeros()`
 - Be careful with integer types and overflow
 
 ### 6. Create the Bridge
@@ -164,7 +162,7 @@ pub mod symbols;
 
 ### 7. Write Tests
 
-Create an inline test for your function testing basic functionality.
+Create an inline test suite for your function, testing basic functionality.
 
 ```rust
 // src/symbols.rs
@@ -184,10 +182,11 @@ fn test_dist_extra_bits() {
 
 ### 8. Create Fuzz Target
 
-Create a fuzzing target which compares your function against the C implementation.
+Create a fuzzing target. This is critical, as it compares your function against
+the reference C implementation.
 
 ```rust
-// fuzz/fuzz_targets/fuzz_dist_extra_bits.rs
+// fuzz/fuzz_targets/fuzz_symbols.rs
 #![no_main]
 use libfuzzer_sys::fuzz_target;
 
@@ -210,8 +209,8 @@ fuzz_target!(|dist: i32| {
 Update `fuzz/Cargo.toml` to include your fuzz target.
 ```toml
 [[bin]]
-name = "fuzz_dist_extra_bits"
-path = "fuzz_targets/fuzz_dist_extra_bits.rs"
+name = "fuzz_symbols"
+path = "fuzz_targets/fuzz_symbols.rs"
 test = false
 doc = false
 ```
@@ -225,7 +224,7 @@ doc = false
 
 2. Run fuzzer:
    ```bash
-   cd fuzz && cargo +nightly fuzz run fuzz_dist_extra_bits -- -max_total_time=10
+   cd fuzz && cargo +nightly fuzz run fuzz_symbols -- -max_total_time=10
    ```
 
 3. If fuzzer finds issues, fix them (e.g., the `i32::MIN` case)
@@ -236,45 +235,6 @@ doc = false
 **Problem**: Can't link directly to static inline C functions  
 **Solution**: Create wrapper functions in a `.c` file
 
-### 2. Integer Overflow
-**Problem**: Rust panics on overflow in debug mode  
-**Solution**: Handle edge cases explicitly (e.g., `i32::MIN` for `abs()`)
-
-### 3. Build Complexity
-**Problem**: Trying to build the entire C library  
-**Solution**: Only compile what you need (individual `.c` files or just wrappers)
-
-### 4. Type Confusion
-**Problem**: C uses platform-specific types  
-**Solution**: Use `std::os::raw::*` types for FFI, convert at boundaries
-
-### 5. Missing Dependencies
-**Problem**: Function depends on other unported functions  
-**Solution**: Either port dependencies first or temporarily use C versions via FFI
-
-## Minimal Cargo.toml
-
-Keep dependencies minimal:
-```toml
-[package]
-name = "zopfli"
-version = "0.1.0"
-edition = "2021"
-
-[features]
-default = ["c-fallback"]
-c-fallback = ["cc"]
-
-[dependencies]
-# No dependencies needed for basic functions
-
-[build-dependencies]
-cc = { version = "1.0", optional = true }
-
-[dev-dependencies]
-# Only what you need for testing
-```
-
 ## When to Expand
 
 Only add infrastructure when you actually need it:
@@ -282,14 +242,6 @@ Only add infrastructure when you actually need it:
 - Add `options.rs` when porting functions that use `ZopfliOptions`
 - Add compression infrastructure only when porting compression functions
 
-## Verification Checklist
-
-- [ ] C and Rust produce identical results for all valid inputs
-- [ ] Fuzz testing passes without panics or mismatches
-- [ ] Edge cases are handled (overflow, underflow, boundary values)
-- [ ] Code follows Rust idioms (no unnecessary `unsafe`, proper error handling)
-- [ ] Tests are comprehensive (exhaustive where feasible, boundaries always)
-- [ ] Documentation explains any non-obvious mappings from C
 
 ## Example: Complete Minimal Port
 
@@ -314,3 +266,8 @@ into `doc/port/bugs/<timestamp_bug_name>.md`. Your document should include a pas
 the program output and expected output, followed by a description of your
 understanding of how the codebase _should_ have worked and what you think went
 wrong.
+
+### 10. Update TASKS.md and commit
+
+After you have completed the porting, update the TASKS.md file to mark the task as completed.
+Then commit your changes with an appropriate commit message.

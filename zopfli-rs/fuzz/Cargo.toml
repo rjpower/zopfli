@@ -26,3 +26,15 @@ name = "fuzz_tree"
 path = "fuzz_targets/fuzz_tree.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "fuzz_hash"
+path = "fuzz_targets/fuzz_hash.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_cache"
+path = "fuzz_targets/fuzz_cache.rs"
+test = false
+doc = false

@@ -1,6 +1,30 @@
 use std::os::raw::{c_int, c_double};
 use crate::options::ZopfliOptions;
 
+// C struct definitions for FFI
+// Based on CODEBASE_ANALYSIS.md, all conditional compilation flags are assumed active
+#[repr(C)]
+pub struct ZopfliHashC {
+    head: *mut c_int,
+    prev: *mut u16,
+    hashval: *mut c_int,
+    val: c_int,
+    // ZOPFLI_HASH_SAME_HASH fields
+    head2: *mut c_int,
+    prev2: *mut u16,
+    hashval2: *mut c_int,
+    val2: c_int,
+    // ZOPFLI_HASH_SAME fields
+    same: *mut u16,
+}
+
+#[repr(C)]
+pub struct ZopfliLongestMatchCacheC {
+    length: *mut u16,
+    dist: *mut u16,
+    sublen: *mut u8,
+}
+
 #[cfg(feature = "c-fallback")]
 extern "C" {
     // Options functions
@@ -43,6 +67,20 @@ extern "C" {
         n: usize, 
         bitlengths: *mut c_double
     );
+
+    // Hash functions - these are regular exported functions
+    pub fn ZopfliAllocHash(window_size: usize, h: *mut ZopfliHashC);
+    pub fn ZopfliResetHash(window_size: usize, h: *mut ZopfliHashC);
+    pub fn ZopfliCleanHash(h: *mut ZopfliHashC);
+    pub fn ZopfliUpdateHash(array: *const u8, pos: usize, end: usize, h: *mut ZopfliHashC);
+    pub fn ZopfliWarmupHash(array: *const u8, pos: usize, end: usize, h: *mut ZopfliHashC);
+
+    // Cache functions - these are regular exported functions  
+    pub fn ZopfliInitCache(blocksize: usize, lmc: *mut ZopfliLongestMatchCacheC);
+    pub fn ZopfliCleanCache(lmc: *mut ZopfliLongestMatchCacheC);
+    pub fn ZopfliSublenToCache(sublen: *const u16, pos: usize, length: usize, lmc: *mut ZopfliLongestMatchCacheC);
+    pub fn ZopfliCacheToSublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize, sublen: *mut u16);
+    pub fn ZopfliMaxCachedSublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize) -> u32;
 }
 
 // Convenience wrappers for the symbol functions
@@ -144,5 +182,67 @@ pub mod tree {
         bitlengths: *mut c_double
     ) {
         ZopfliCalculateEntropy(count, n, bitlengths)
+    }
+}
+
+// Convenience wrappers for hash functions
+#[cfg(feature = "c-fallback")]
+pub mod hash {
+    use super::*;
+    
+    #[inline]
+    pub unsafe fn alloc_hash(window_size: usize, h: *mut ZopfliHashC) {
+        ZopfliAllocHash(window_size, h)
+    }
+    
+    #[inline]
+    pub unsafe fn reset_hash(window_size: usize, h: *mut ZopfliHashC) {
+        ZopfliResetHash(window_size, h)
+    }
+    
+    #[inline]
+    pub unsafe fn clean_hash(h: *mut ZopfliHashC) {
+        ZopfliCleanHash(h)
+    }
+    
+    #[inline]
+    pub unsafe fn update_hash(array: *const u8, pos: usize, end: usize, h: *mut ZopfliHashC) {
+        ZopfliUpdateHash(array, pos, end, h)
+    }
+    
+    #[inline]
+    pub unsafe fn warmup_hash(array: *const u8, pos: usize, end: usize, h: *mut ZopfliHashC) {
+        ZopfliWarmupHash(array, pos, end, h)
+    }
+}
+
+// Convenience wrappers for cache functions
+#[cfg(feature = "c-fallback")]
+pub mod cache {
+    use super::*;
+    
+    #[inline]
+    pub unsafe fn init_cache(blocksize: usize, lmc: *mut ZopfliLongestMatchCacheC) {
+        ZopfliInitCache(blocksize, lmc)
+    }
+    
+    #[inline]
+    pub unsafe fn clean_cache(lmc: *mut ZopfliLongestMatchCacheC) {
+        ZopfliCleanCache(lmc)
+    }
+    
+    #[inline]
+    pub unsafe fn sublen_to_cache(sublen: *const u16, pos: usize, length: usize, lmc: *mut ZopfliLongestMatchCacheC) {
+        ZopfliSublenToCache(sublen, pos, length, lmc)
+    }
+    
+    #[inline]
+    pub unsafe fn cache_to_sublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize, sublen: *mut u16) {
+        ZopfliCacheToSublen(lmc, pos, length, sublen)
+    }
+    
+    #[inline]
+    pub unsafe fn max_cached_sublen(lmc: *const ZopfliLongestMatchCacheC, pos: usize, length: usize) -> u32 {
+        ZopfliMaxCachedSublen(lmc, pos, length)
     }
 }

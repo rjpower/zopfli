@@ -47,31 +47,31 @@ Here's the Zopfli C to Rust porting task list as a Markdown checklist:
     -   [x] Test: Compare `bitlengths` (double array) with tolerance.
 
 **Phase 3: Hash Table & Longest Match Cache**
--   [ ] **Task 15: Port `ZopfliHash` struct and its lifecycle functions**
-    -   [ ] Define `ZopfliHash` struct in Rust.
-    -   [ ] Implement `new()` (alloc & reset).
-    -   [ ] Implement `Drop` (clean).
-    -   [ ] Test: Compare initial struct state between C and Rust.
--   [ ] **Task 16: Port `ZopfliWarmupHash`**
-    -   [ ] Implement Rust method for `ZopfliHash`.
-    -   [ ] Test: Compare `h->val` after warmup.
--   [ ] **Task 17: Port `ZopfliUpdateHash`**
-    -   [ ] Implement Rust method for `ZopfliHash`.
-    -   [ ] Test: Compare relevant `ZopfliHash` fields after updates.
--   [ ] **Task 18: Port `ZopfliLongestMatchCache` struct and its lifecycle functions**
-    -   [ ] Define `ZopfliLongestMatchCache` struct in Rust.
-    -   [ ] Implement `new()` (init).
-    -   [ ] Implement `Drop` (clean).
-    -   [ ] Test: Compare initial cache state between C and Rust.
--   [ ] **Task 19: Port `ZopfliSublenToCache`**
-    -   [ ] Implement Rust method for `ZopfliLongestMatchCache`.
-    -   [ ] Test: Compare `lmc->sublen` content.
--   [ ] **Task 20: Port `ZopfliMaxCachedSublen`**
-    -   [ ] Implement Rust method for `ZopfliLongestMatchCache`.
-    -   [ ] Test: Compare return value.
--   [ ] **Task 21: Port `ZopfliCacheToSublen`**
-    -   [ ] Implement Rust method for `ZopfliLongestMatchCache`.
-    -   [ ] Test: Compare reconstructed `sublen_out` array.
+-   [x] **Task 15: Port `ZopfliHash` struct and its lifecycle functions**
+    -   [x] Define `ZopfliHash` struct in Rust.
+    -   [x] Implement `new()` (alloc & reset).
+    -   [x] Implement `Drop` (clean).
+    -   [x] Test: Compare initial struct state between C and Rust.
+-   [x] **Task 16: Port `ZopfliWarmupHash`**
+    -   [x] Implement Rust method for `ZopfliHash`.
+    -   [x] Test: Compare `h->val` after warmup.
+-   [x] **Task 17: Port `ZopfliUpdateHash`**
+    -   [x] Implement Rust method for `ZopfliHash`.
+    -   [x] Test: Compare relevant `ZopfliHash` fields after updates.
+-   [x] **Task 18: Port `ZopfliLongestMatchCache` struct and its lifecycle functions**
+    -   [x] Define `ZopfliLongestMatchCache` struct in Rust.
+    -   [x] Implement `new()` (init).
+    -   [x] Implement `Drop` (clean).
+    -   [x] Test: Compare initial cache state between C and Rust.
+-   [x] **Task 19: Port `ZopfliSublenToCache`**
+    -   [x] Implement Rust method for `ZopfliLongestMatchCache`.
+    -   [x] Test: Compare `lmc->sublen` content.
+-   [x] **Task 20: Port `ZopfliMaxCachedSublen`**
+    -   [x] Implement Rust method for `ZopfliLongestMatchCache`.
+    -   [x] Test: Compare return value.
+-   [x] **Task 21: Port `ZopfliCacheToSublen`**
+    -   [x] Implement Rust method for `ZopfliLongestMatchCache`.
+    -   [x] Test: Compare reconstructed `sublen_out` array.
 
 **Phase 4: LZ77 Store and Operations**
 -   [ ] **Task 22: Port `ZopfliLZ77Store` struct and its lifecycle functions**
