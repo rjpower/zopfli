@@ -7,7 +7,7 @@ use crate::symbols::*;
 
 /// Debug function to reproduce the exact bug found by fuzzing
 pub fn debug_dynamic_huffman_bug() {
-    // Failing input from fuzzer
+    // First failing input from fuzzer  
     let data = [63, 34, 34, 34, 223, 221, 255, 255, 255, 255, 255, 254, 0, 0, 0, 34, 34, 34, 34, 34, 34, 34, 34, 0, 0, 0, 0, 0, 37];
     
     // Create LZ77 representation
@@ -96,6 +96,9 @@ fn debug_dynamic_lengths(lz77: &ZopfliLZ77Store, lstart: usize, lend: usize) {
         }
     }
     
+    // Debug individual tree size calculation
+    debug_tree_size_calculation(&ll_lengths, &d_lengths);
+    
     // Step 4: Calculate costs
     let tree_size = calculate_tree_size(&ll_lengths, &d_lengths);
     let data_size = calculate_block_symbol_size_given_counts(&ll_counts, &d_counts, &ll_lengths, &d_lengths, lz77, lstart, lend);
@@ -139,6 +142,33 @@ fn debug_dynamic_lengths(lz77: &ZopfliLZ77Store, lstart: usize, lend: usize) {
     println!("Final cost: {:.2}", final_cost);
     println!("With 3-bit header: {:.2}", 3.0 + final_cost);
 }
+
+/// Debug the tree size calculation by trying all 8 RLE combinations
+fn debug_tree_size_calculation(ll_lengths: &[u32; ZOPFLI_NUM_LL], d_lengths: &[u32; ZOPFLI_NUM_D]) {
+    println!("\n=== Debugging tree size calculation ===");
+    
+    let mut best_size = f64::MAX;
+    let mut best_combo = 0;
+    
+    for i in 0..8 {
+        let use_16 = (i & 1) != 0;
+        let use_17 = (i & 2) != 0;
+        let use_18 = (i & 4) != 0;
+        
+        let size = encode_tree(ll_lengths, d_lengths, use_16, use_17, use_18);
+        println!("Combo {} (16:{}, 17:{}, 18:{}): {:.2}", i, use_16, use_17, use_18, size);
+        
+        if size < best_size {
+            best_size = size;
+            best_combo = i;
+        }
+    }
+    
+    println!("Best combo: {} with size {:.2}", best_combo, best_size);
+}
+
+/// Debug encode_tree function more explicitly  
+use crate::deflate::encode_tree;
 
 #[cfg(test)]
 mod tests {

@@ -299,7 +299,7 @@ pub fn optimize_huffman_for_rle(length: usize, counts: &mut [usize]) {
 }
 
 /// Encode tree and calculate its size
-fn encode_tree(
+pub fn encode_tree(
     ll_lengths: &[u32; ZOPFLI_NUM_LL],
     d_lengths: &[u32; ZOPFLI_NUM_D],
     use_16: bool,
@@ -424,23 +424,132 @@ fn encode_tree(
     result
 }
 
-/// Calculate tree size trying all RLE encoding options
+/// Calculate tree size trying all RLE encoding options - matches C CalculateTreeSize exactly
 pub fn calculate_tree_size(ll_lengths: &[u32; ZOPFLI_NUM_LL], d_lengths: &[u32; ZOPFLI_NUM_D]) -> f64 {
-    let mut best_size = f64::MAX;
+    let mut result = 0usize;
     
-    // Try all 8 combinations of using codes 16, 17, 18
+    // Try all 8 combinations of using codes 16, 17, 18 - exactly like C implementation
     for i in 0..8 {
         let use_16 = (i & 1) != 0;
         let use_17 = (i & 2) != 0;
         let use_18 = (i & 4) != 0;
         
-        let size = encode_tree(ll_lengths, d_lengths, use_16, use_17, use_18);
-        if size < best_size {
-            best_size = size;
+        let size = encode_tree_size_only(ll_lengths, d_lengths, use_16, use_17, use_18);
+        if result == 0 || size < result {
+            result = size;
         }
     }
     
-    best_size
+    result as f64
+}
+
+/// Encode tree size calculation matching C EncodeTree exactly
+fn encode_tree_size_only(
+    ll_lengths: &[u32; ZOPFLI_NUM_LL],
+    d_lengths: &[u32; ZOPFLI_NUM_D],
+    use_16: bool,
+    use_17: bool,
+    use_18: bool,
+) -> usize {
+    let mut hlit = 29; // 286 - 257
+    let mut hdist = 29; // 32 - 1, but gzip does not like hdist > 29
+    
+    // Trim zeros - exactly like C
+    while hlit > 0 && ll_lengths[257 + hlit - 1] == 0 {
+        hlit -= 1;
+    }
+    while hdist > 0 && d_lengths[1 + hdist - 1] == 0 {
+        hdist -= 1;
+    }
+    
+    let hlit2 = hlit + 257;
+    let lld_total = hlit2 + hdist + 1;
+    
+    // Create combined array of code lengths
+    let mut lld = vec![0u32; lld_total];
+    for i in 0..hlit2 {
+        lld[i] = ll_lengths[i];
+    }
+    for i in 0..=hdist {
+        lld[hlit2 + i] = d_lengths[i];
+    }
+    
+    // Count code length code frequencies - exactly like C logic
+    let mut clcounts = [0usize; 19];
+    
+    let mut i = 0;
+    while i < lld_total {
+        let symbol = lld[i];
+        let mut count = 1;
+        
+        // Count consecutive values - exactly like C
+        while i + count < lld_total && lld[i + count] == symbol {
+            count += 1;
+        }
+        
+        i += count - 1;
+        
+        // Repetitions of zeroes - exactly like C
+        if symbol == 0 && count >= 3 {
+            if use_18 {
+                while count >= 11 {
+                    let count2 = if count > 138 { 138 } else { count };
+                    clcounts[18] += 1;
+                    count -= count2;
+                }
+            }
+            if use_17 {
+                while count >= 3 {
+                    let count2 = if count > 10 { 10 } else { count };
+                    clcounts[17] += 1;
+                    count -= count2;
+                }
+            }
+        }
+        
+        // Repetitions of any symbol - exactly like C
+        if use_16 && count >= 4 {
+            count -= 1; // Since the first one is hardcoded
+            clcounts[symbol as usize] += 1;
+            while count >= 3 {
+                let count2 = if count > 6 { 6 } else { count };
+                clcounts[16] += 1;
+                count -= count2;
+            }
+        }
+        
+        // No or insufficient repetition - exactly like C
+        clcounts[symbol as usize] += count;
+        
+        i += 1;
+    }
+    
+    let mut clcl = [0u32; 19];
+    let _ = crate::tree::calculate_bit_lengths(&clcounts, 7, &mut clcl);
+    
+    // Trim trailing zeros - exactly like C logic
+    let order = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+    let mut hclen = 15;
+    while hclen > 0 && clcounts[order[hclen + 4 - 1]] == 0 {
+        hclen -= 1;
+    }
+    
+    // Calculate size exactly like C implementation
+    let mut result_size = 0usize;
+    result_size += 14; // hlit, hdist, hclen bits
+    result_size += (hclen + 4) * 3; // clcl bits
+    
+    // Use clcl[i] * clcounts[i] like C
+    for i in 0..19 {
+        result_size += clcl[i] as usize * clcounts[i];
+    }
+    
+    // Extra bits - exactly like C
+    result_size += clcounts[16] * 2;
+    result_size += clcounts[17] * 3; 
+    result_size += clcounts[18] * 7;
+    
+    result_size
 }
 
 /// Calculate block size in bits for a specific block type

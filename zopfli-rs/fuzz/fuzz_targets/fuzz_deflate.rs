@@ -56,8 +56,8 @@ fuzz_target!(|data: &[u8]| {
             let tolerance = 1.0;
             assert!(
                 (c_size - rust_size).abs() < tolerance,
-                "Block size mismatch for type {}: C={:.2}, Rust={:.2}",
-                btype, c_size, rust_size
+                "Block size mismatch for type {}: C={:.2}, Rust={:.2}, Input: {:?}",
+                btype, c_size, rust_size, data
             );
         }
         
