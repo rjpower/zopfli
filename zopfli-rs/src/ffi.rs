@@ -8,7 +8,7 @@ pub struct ZopfliHashC {
     head: *mut c_int,
     prev: *mut u16,
     hashval: *mut c_int,
-    val: c_int,
+    pub val: c_int,
     // ZOPFLI_HASH_SAME_HASH fields
     head2: *mut c_int,
     prev2: *mut u16,

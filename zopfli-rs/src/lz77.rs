@@ -925,13 +925,9 @@ pub fn lz77_greedy(
     let mut leng;
     let mut dist;
     let mut lengthscore;
-    #[cfg(feature = "zopfli-lazy-matching")]
     let mut prev_length = 0;
-    #[cfg(feature = "zopfli-lazy-matching")]
     let mut prev_match = 0;
-    #[cfg(feature = "zopfli-lazy-matching")]
     let mut prevlengthscore: u16;
-    #[cfg(feature = "zopfli-lazy-matching")]
     let mut match_available = false;
 
     while i < inend {
@@ -943,7 +939,6 @@ pub fn lz77_greedy(
         lengthscore = get_length_score(leng, dist);
 
         // Lazy matching
-        #[cfg(feature = "zopfli-lazy-matching")]
         {
             prevlengthscore = get_length_score(prev_length, prev_match);
             if match_available {
@@ -961,7 +956,7 @@ pub fn lz77_greedy(
                     // Add previous to output
                     leng = prev_length;
                     dist = prev_match;
-                    lengthscore = prevlengthscore;
+                    // lengthscore = prevlengthscore;
                     // Add to output
                     verify_len_dist(input, i - 1, dist, leng);
                     store.store_lit_len_dist(leng, dist, i - 1);

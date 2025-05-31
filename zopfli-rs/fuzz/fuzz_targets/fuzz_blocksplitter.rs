@@ -64,13 +64,10 @@ fuzz_target!(|data: &[u8]| {
             // These will be tested once deflate.rs is implemented properly.
             // For now, just test that they don't panic:
 
-            #[cfg(not(feature = "c-fallback"))]
-            {
-                // Now that deflate is implemented, test actual block splitting
-                let rust_result = zopfli::bridge::block_split(&options, data, instart, inend, maxblocks);
-                assert!(rust_result.iter().all(|&x| x >= instart && x < inend));
-                assert!(rust_result.len() <= maxblocks.saturating_sub(1));
-            }
+            // Now that deflate is implemented, test actual block splitting
+            let rust_result = zopfli::bridge::block_split(&options, data, instart, inend, maxblocks);
+            assert!(rust_result.iter().all(|&x| x >= instart && x < inend));
+            assert!(rust_result.len() <= maxblocks.saturating_sub(1));
         }
     }
 });

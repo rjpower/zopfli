@@ -4,7 +4,6 @@ use zopfli::{lz77::{ZopfliBlockState, ZopfliLZ77Store}, options::ZopfliOptions};
 use std::os::raw::c_int;
 
 // FFI for C implementations
-#[cfg(feature = "c-fallback")]
 extern "C" {
     fn ZopfliLZ77Optimal(
         s: *mut zopfli::ffi::ZopfliBlockStateC,
@@ -66,55 +65,52 @@ fuzz_target!(|data: &[u8]| {
             &mut rust_store,
         );
 
-        #[cfg(feature = "c-fallback")]
-        {
-            // C implementation
-            let mut c_block_state: zopfli::ffi::ZopfliBlockStateC = unsafe { std::mem::zeroed() };
-            unsafe {
-                zopfli::ffi::ZopfliInitBlockState(
-                    &options as *const ZopfliOptions,
-                    0,
-                    test_data.len(),
-                    if add_lmc { 1 } else { 0 },
-                    &mut c_block_state,
-                );
-            }
+        // C implementation
+        let mut c_block_state: zopfli::ffi::ZopfliBlockStateC = unsafe { std::mem::zeroed() };
+        unsafe {
+            zopfli::ffi::ZopfliInitBlockState(
+                &options as *const ZopfliOptions,
+                0,
+                test_data.len(),
+                if add_lmc { 1 } else { 0 },
+                &mut c_block_state,
+            );
+        }
 
-            let mut c_store: zopfli::ffi::ZopfliLZ77StoreC = unsafe { std::mem::zeroed() };
-            unsafe {
-                zopfli::ffi::ZopfliInitLZ77Store(test_data.as_ptr(), &mut c_store);
-                
-                ZopfliLZ77Optimal(
-                    &mut c_block_state,
-                    test_data.as_ptr(),
-                    0,
-                    test_data.len(),
-                    numiterations,
-                    &mut c_store,
-                );
-            }
+        let mut c_store: zopfli::ffi::ZopfliLZ77StoreC = unsafe { std::mem::zeroed() };
+        unsafe {
+            zopfli::ffi::ZopfliInitLZ77Store(test_data.as_ptr(), &mut c_store);
+            
+            ZopfliLZ77Optimal(
+                &mut c_block_state,
+                test_data.as_ptr(),
+                0,
+                test_data.len(),
+                numiterations,
+                &mut c_store,
+            );
+        }
 
-            // Compare results exactly - the algorithms should be deterministic
-            let c_size = unsafe { zopfli::ffi::ZopfliLZ77StoreGetSize(&c_store) };
-            assert_eq!(rust_store.size(), c_size, "Store sizes differ: Rust={}, C={}", rust_store.size(), c_size);
+        // Compare results exactly - the algorithms should be deterministic
+        let c_size = unsafe { zopfli::ffi::ZopfliLZ77StoreGetSize(&c_store) };
+        assert_eq!(rust_store.size(), c_size, "Store sizes differ: Rust={}, C={}", rust_store.size(), c_size);
+        
+        // Compare each LZ77 symbol
+        for i in 0..rust_store.size() {
+            let (rust_litlen, rust_dist) = rust_store.get_litlen_dist(i);
+            let c_litlen = unsafe { zopfli::ffi::ZopfliLZ77StoreGetLitLen(&c_store, i) };
+            let c_dist = unsafe { zopfli::ffi::ZopfliLZ77StoreGetDist(&c_store, i) };
             
-            // Compare each LZ77 symbol
-            for i in 0..rust_store.size() {
-                let (rust_litlen, rust_dist) = rust_store.get_litlen_dist(i);
-                let c_litlen = unsafe { zopfli::ffi::ZopfliLZ77StoreGetLitLen(&c_store, i) };
-                let c_dist = unsafe { zopfli::ffi::ZopfliLZ77StoreGetDist(&c_store, i) };
-                
-                assert_eq!(rust_litlen, c_litlen, 
-                    "LitLen mismatch at index {}: Rust={}, C={}", i, rust_litlen, c_litlen);
-                assert_eq!(rust_dist, c_dist,
-                    "Dist mismatch at index {}: Rust={}, C={}", i, rust_dist, c_dist);
-            }
-            
-            // Clean up C resources
-            unsafe {
-                zopfli::ffi::ZopfliCleanLZ77Store(&mut c_store);
-                zopfli::ffi::ZopfliCleanBlockState(&mut c_block_state);
-            }
+            assert_eq!(rust_litlen, c_litlen, 
+                "LitLen mismatch at index {}: Rust={}, C={}", i, rust_litlen, c_litlen);
+            assert_eq!(rust_dist, c_dist,
+                "Dist mismatch at index {}: Rust={}, C={}", i, rust_dist, c_dist);
+        }
+        
+        // Clean up C resources
+        unsafe {
+            zopfli::ffi::ZopfliCleanLZ77Store(&mut c_store);
+            zopfli::ffi::ZopfliCleanBlockState(&mut c_block_state);
         }
     }
 
@@ -134,54 +130,51 @@ fuzz_target!(|data: &[u8]| {
             &mut rust_store,
         );
 
-        #[cfg(feature = "c-fallback")]
-        {
-            // C implementation
-            let mut c_block_state: zopfli::ffi::ZopfliBlockStateC = unsafe { std::mem::zeroed() };
-            unsafe {
-                zopfli::ffi::ZopfliInitBlockState(
-                    &options as *const ZopfliOptions,
-                    0,
-                    test_data.len(),
-                    if add_lmc { 1 } else { 0 },
-                    &mut c_block_state,
-                );
-            }
+        // C implementation
+        let mut c_block_state: zopfli::ffi::ZopfliBlockStateC = unsafe { std::mem::zeroed() };
+        unsafe {
+            zopfli::ffi::ZopfliInitBlockState(
+                &options as *const ZopfliOptions,
+                0,
+                test_data.len(),
+                if add_lmc { 1 } else { 0 },
+                &mut c_block_state,
+            );
+        }
 
-            let mut c_store: zopfli::ffi::ZopfliLZ77StoreC = unsafe { std::mem::zeroed() };
-            unsafe {
-                zopfli::ffi::ZopfliInitLZ77Store(test_data.as_ptr(), &mut c_store);
-                
-                ZopfliLZ77OptimalFixed(
-                    &mut c_block_state,
-                    test_data.as_ptr(),
-                    0,
-                    test_data.len(),
-                    &mut c_store,
-                );
-            }
+        let mut c_store: zopfli::ffi::ZopfliLZ77StoreC = unsafe { std::mem::zeroed() };
+        unsafe {
+            zopfli::ffi::ZopfliInitLZ77Store(test_data.as_ptr(), &mut c_store);
+            
+            ZopfliLZ77OptimalFixed(
+                &mut c_block_state,
+                test_data.as_ptr(),
+                0,
+                test_data.len(),
+                &mut c_store,
+            );
+        }
 
-            // Compare results exactly for fixed tree
-            let c_size = unsafe { zopfli::ffi::ZopfliLZ77StoreGetSize(&c_store) };
-            assert_eq!(rust_store.size(), c_size, "Fixed store sizes differ: Rust={}, C={}", rust_store.size(), c_size);
+        // Compare results exactly for fixed tree
+        let c_size = unsafe { zopfli::ffi::ZopfliLZ77StoreGetSize(&c_store) };
+        assert_eq!(rust_store.size(), c_size, "Fixed store sizes differ: Rust={}, C={}", rust_store.size(), c_size);
+        
+        // Compare each LZ77 symbol
+        for i in 0..rust_store.size() {
+            let (rust_litlen, rust_dist) = rust_store.get_litlen_dist(i);
+            let c_litlen = unsafe { zopfli::ffi::ZopfliLZ77StoreGetLitLen(&c_store, i) };
+            let c_dist = unsafe { zopfli::ffi::ZopfliLZ77StoreGetDist(&c_store, i) };
             
-            // Compare each LZ77 symbol
-            for i in 0..rust_store.size() {
-                let (rust_litlen, rust_dist) = rust_store.get_litlen_dist(i);
-                let c_litlen = unsafe { zopfli::ffi::ZopfliLZ77StoreGetLitLen(&c_store, i) };
-                let c_dist = unsafe { zopfli::ffi::ZopfliLZ77StoreGetDist(&c_store, i) };
-                
-                assert_eq!(rust_litlen, c_litlen, 
-                    "Fixed LitLen mismatch at index {}: Rust={}, C={}", i, rust_litlen, c_litlen);
-                assert_eq!(rust_dist, c_dist,
-                    "Fixed Dist mismatch at index {}: Rust={}, C={}", i, rust_dist, c_dist);
-            }
-            
-            // Clean up C resources
-            unsafe {
-                zopfli::ffi::ZopfliCleanLZ77Store(&mut c_store);
-                zopfli::ffi::ZopfliCleanBlockState(&mut c_block_state);
-            }
+            assert_eq!(rust_litlen, c_litlen, 
+                "Fixed LitLen mismatch at index {}: Rust={}, C={}", i, rust_litlen, c_litlen);
+            assert_eq!(rust_dist, c_dist,
+                "Fixed Dist mismatch at index {}: Rust={}, C={}", i, rust_dist, c_dist);
+        }
+        
+        // Clean up C resources
+        unsafe {
+            zopfli::ffi::ZopfliCleanLZ77Store(&mut c_store);
+            zopfli::ffi::ZopfliCleanBlockState(&mut c_block_state);
         }
     }
 });

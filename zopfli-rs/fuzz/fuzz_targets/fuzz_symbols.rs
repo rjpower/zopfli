@@ -77,8 +77,13 @@ fn test_distance_functions(dist: i32) {
 }
 
 fn test_length_functions(length: i32) {
-    // Test within reasonable bounds for length
-    let length = length.abs() % 300; // Keep within reasonable range
+    // Handle overflow case for i32::MIN
+    if length == i32::MIN {
+        return;
+    }
+    
+    // Test within valid DEFLATE length range (3-258)
+    let length = 3 + (length.abs() % 256); // Range [3, 258]
     
     // Test get_length_extra_bits
     let c_bits = unsafe { zopfli::ffi::symbols::get_length_extra_bits(length) };
@@ -121,6 +126,11 @@ fn test_length_functions(length: i32) {
 }
 
 fn test_symbol_functions(symbol: i32) {
+    // Handle overflow case for i32::MIN
+    if symbol == i32::MIN {
+        return;
+    }
+    
     // Test length symbol extra bits (symbols 257-285)
     let length_symbol = 257 + (symbol.abs() % 29); // Range [257, 285]
     

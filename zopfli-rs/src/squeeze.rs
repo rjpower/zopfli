@@ -220,11 +220,10 @@ fn get_best_lengths(
 
     let mincost = get_cost_model_min_cost(costmodel, costcontext);
 
-    for i in instart..inend {
-        let j = i - instart; // Index in the costs array and length_array.
+    for mut i in instart..inend {
+        let mut j = i - instart; // Index in the costs array and length_array.
         h.update(input, i, inend);
 
-        #[cfg(feature = "zopfli-shortcut-long-repetitions")]
         {
             // If we're in a long repetition of the same character and have more than
             // ZOPFLI_MAX_MATCH characters before and after our position.
@@ -237,7 +236,7 @@ fn get_best_lengths(
                 // Set the length to reach each one to ZOPFLI_MAX_MATCH, and the cost to
                 // the cost corresponding to that length. Doing this, we skip
                 // ZOPFLI_MAX_MATCH values to avoid calling find_longest_match.
-                for k in 0..ZOPFLI_MAX_MATCH {
+                for _k in 0..ZOPFLI_MAX_MATCH {
                     costs[j + ZOPFLI_MAX_MATCH] = costs[j] + symbolcost;
                     length_array[j + ZOPFLI_MAX_MATCH] = ZOPFLI_MAX_MATCH as u16;
                     i += 1;
@@ -504,20 +503,9 @@ pub fn lz77_optimal_fixed<'a>(
     );
 }
 
-// Calculate block size using C implementation for now
-fn calculate_block_size(_lz77: &ZopfliLZ77Store, _lstart: usize, _lend: usize, _btype: i32) -> f64 {
-    #[cfg(feature = "c-fallback")]
-    {
-        // We need to create a C-compatible LZ77Store
-        // For now, return a dummy value. This will be properly implemented when we port deflate.c
-        1000.0
-    }
-    
-    #[cfg(not(feature = "c-fallback"))]
-    {
-        // For now, return a dummy value. This will be properly implemented when we port deflate.c
-        1000.0
-    }
+// Use the deflate module's calculate_block_size function
+fn calculate_block_size(lz77: &ZopfliLZ77Store, lstart: usize, lend: usize, btype: i32) -> f64 {
+    crate::deflate::calculate_block_size(lz77, lstart, lend, btype)
 }
 
 #[cfg(test)]

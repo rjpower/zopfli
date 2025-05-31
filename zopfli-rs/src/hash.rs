@@ -35,7 +35,7 @@ pub struct ZopfliHash {
     
     // ZOPFLI_HASH_SAME fields
     /// Amount of repetitions of same byte after this position.
-    same: Vec<u16>,
+    pub same: Vec<u16>,
 }
 
 impl ZopfliHash {

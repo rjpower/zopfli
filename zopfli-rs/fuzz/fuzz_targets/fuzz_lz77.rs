@@ -1,6 +1,5 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
-use std::os::raw::{c_int, c_ushort};
 use std::mem::MaybeUninit;
 
 fuzz_target!(|data: &[u8]| {

@@ -200,29 +200,118 @@ fn get_dynamic_lengths(
     
     patch_distance_codes_for_buggy_decoders(&mut d_lengths);
     
-    // For now, return a simplified tree size calculation
-    // TODO: Implement full RLE optimization (TryOptimizeHuffmanForRle)
-    let tree_size = calculate_tree_size_simple(&ll_lengths, &d_lengths);
-    let symbol_size = calculate_block_symbol_size_given_counts(&ll_counts, &d_counts, &ll_lengths, &d_lengths, lz77, lstart, lend);
+    // Try with and without RLE optimization
+    let tree_size = calculate_tree_size(&ll_lengths, &d_lengths);
+    let data_size = calculate_block_symbol_size_given_counts(&ll_counts, &d_counts, &ll_lengths, &d_lengths, lz77, lstart, lend);
     
-    (tree_size + symbol_size as f64, ll_lengths, d_lengths)
+    // Try RLE optimization
+    let mut ll_counts2 = ll_counts.clone();
+    let mut d_counts2 = d_counts.clone();
+    optimize_huffman_for_rle(ZOPFLI_NUM_LL, &mut ll_counts2);
+    optimize_huffman_for_rle(ZOPFLI_NUM_D, &mut d_counts2);
+    
+    let mut ll_lengths2 = [0u32; ZOPFLI_NUM_LL];
+    let mut d_lengths2 = [0u32; ZOPFLI_NUM_D];
+    let _ = calculate_bit_lengths(&ll_counts2, 15, &mut ll_lengths2);
+    let _ = calculate_bit_lengths(&d_counts2, 15, &mut d_lengths2);
+    patch_distance_codes_for_buggy_decoders(&mut d_lengths2);
+    
+    let tree_size2 = calculate_tree_size(&ll_lengths2, &d_lengths2);
+    let data_size2 = calculate_block_symbol_size_given_counts(&ll_counts, &d_counts, &ll_lengths2, &d_lengths2, lz77, lstart, lend);
+    
+    // Choose the better option
+    if tree_size2 + (data_size2 as f64) < tree_size + (data_size as f64) {
+        (tree_size2 + data_size2 as f64, ll_lengths2, d_lengths2)
+    } else {
+        (tree_size + data_size as f64, ll_lengths, d_lengths)
+    }
 }
 
-/// Simplified tree size calculation (placeholder for full RLE optimization)
-fn calculate_tree_size_simple(ll_lengths: &[u32; ZOPFLI_NUM_LL], d_lengths: &[u32; ZOPFLI_NUM_D]) -> f64 {
-    // This is a simplified version that estimates tree encoding cost
-    // The actual implementation uses RLE encoding to minimize the tree description
+/// Optimize Huffman tree for RLE encoding
+fn optimize_huffman_for_rle(length: usize, counts: &mut [usize]) {
+    // 1) Don't touch trailing zeros
+    let mut actual_length = length;
+    while actual_length > 0 {
+        if counts[actual_length - 1] != 0 {
+            break;
+        }
+        actual_length -= 1;
+    }
+    if actual_length == 0 {
+        return;
+    }
     
-    // Count non-zero lengths
-    let mut hlit = 29; // max HLIT value (ZOPFLI_NUM_LL - 257 - 1)
-    let mut hdist = 29; // max distance codes - 1
+    // 2) Mark all population counts that already can be encoded with an rle code
+    let mut good_for_rle = vec![false; actual_length];
     
-    // Trim trailing zeros for literal/length codes
+    // Mark any seq of 0's that is longer than 5 as good_for_rle
+    // Mark any seq of non-0's that is longer than 7 as good_for_rle
+    let mut symbol = counts[0];
+    let mut stride = 0;
+    for i in 0..=actual_length {
+        if i == actual_length || counts[i] != symbol {
+            if (symbol == 0 && stride >= 5) || (symbol != 0 && stride >= 7) {
+                for k in 0..stride {
+                    good_for_rle[i - k - 1] = true;
+                }
+            }
+            stride = 1;
+            if i != actual_length {
+                symbol = counts[i];
+            }
+        } else {
+            stride += 1;
+        }
+    }
+    
+    // 3) Replace population counts that lead to more rle codes
+    let mut stride = 0;
+    let mut limit = counts[0];
+    let mut sum = 0;
+    for i in 0..=actual_length {
+        if i == actual_length || good_for_rle[i] || counts[i].abs_diff(limit) >= 4 {
+            if stride >= 4 || (stride >= 3 && sum == 0) {
+                let count = if sum == 0 {
+                    0
+                } else {
+                    ((sum + stride / 2) / stride).max(1)
+                };
+                for k in 0..stride {
+                    counts[i - k - 1] = count;
+                }
+            }
+            stride = 0;
+            sum = 0;
+            if i + 3 < actual_length {
+                limit = (counts[i] + counts[i + 1] + counts[i + 2] + counts[i + 3] + 2) / 4;
+            } else if i < actual_length {
+                limit = counts[i];
+            } else {
+                limit = 0;
+            }
+        }
+        stride += 1;
+        if i != actual_length {
+            sum += counts[i];
+        }
+    }
+}
+
+/// Encode tree and calculate its size
+fn encode_tree(
+    ll_lengths: &[u32; ZOPFLI_NUM_LL],
+    d_lengths: &[u32; ZOPFLI_NUM_D],
+    use_16: bool,
+    use_17: bool,
+    use_18: bool,
+) -> f64 {
+    let mut hlit = 29;
+    let mut hdist = 29;
+    
+    // Trim zeros
     while hlit > 0 && ll_lengths[257 + hlit - 1] == 0 {
         hlit -= 1;
     }
-    
-    // Trim trailing zeros for distance codes  
     while hdist > 0 && d_lengths[1 + hdist - 1] == 0 {
         hdist -= 1;
     }
@@ -230,9 +319,127 @@ fn calculate_tree_size_simple(ll_lengths: &[u32; ZOPFLI_NUM_LL], d_lengths: &[u3
     let hlit2 = hlit + 257;
     let lld_total = hlit2 + hdist + 1;
     
-    // Rough estimation: 5 bits for HLIT + 5 bits for HDIST + 4 bits for HCLEN
-    // Plus about 3 bits per code length on average
-    14.0 + lld_total as f64 * 3.0
+    // Create combined array of code lengths
+    let mut lld = vec![0u32; lld_total];
+    for i in 0..hlit2 {
+        lld[i] = ll_lengths[i];
+    }
+    for i in 0..=hdist {
+        lld[hlit2 + i] = d_lengths[i];
+    }
+    
+    // RLE encode the lengths
+    let mut rle = Vec::new();
+    let mut rle_bits = Vec::new();
+    let mut i = 0;
+    while i < lld_total {
+        let value = lld[i];
+        let mut j = i + 1;
+        
+        // Count consecutive values
+        while j < lld_total && lld[j] == value {
+            j += 1;
+        }
+        let count = j - i;
+        
+        if value == 0 && count >= 3 {
+            // Use codes 17 or 18 for runs of zeros
+            let mut remaining = count;
+            while remaining >= 11 && use_18 {
+                let run_len = remaining.min(138);
+                rle.push(18);
+                rle_bits.push((run_len - 11) as u32);
+                remaining -= run_len;
+            }
+            while remaining >= 3 && use_17 {
+                let run_len = remaining.min(10);
+                rle.push(17);
+                rle_bits.push((run_len - 3) as u32);
+                remaining -= run_len;
+            }
+            // Output remaining zeros directly
+            for _ in 0..remaining {
+                rle.push(0);
+                rle_bits.push(0);
+            }
+        } else if value != 0 && count >= 4 {
+            // Use code 16 for runs of non-zero values
+            rle.push(value);
+            rle_bits.push(0);
+            let mut remaining = count - 1;
+            while remaining >= 3 && use_16 {
+                let run_len = remaining.min(6);
+                rle.push(16);
+                rle_bits.push((run_len - 3) as u32);
+                remaining -= run_len;
+            }
+            // Output remaining values directly
+            for _ in 0..remaining {
+                rle.push(value);
+                rle_bits.push(0);
+            }
+        } else {
+            // Output values directly
+            for _ in 0..count {
+                rle.push(value);
+                rle_bits.push(0);
+            }
+        }
+        
+        i = j;
+    }
+    
+    // Count code length code frequencies
+    let mut clcounts = [0usize; 19];
+    for &symbol in &rle {
+        clcounts[symbol as usize] += 1;
+    }
+    
+    let mut clcl = [0u32; 19];
+    let _ = calculate_bit_lengths(&clcounts, 7, &mut clcl);
+    
+    // Trim trailing zeros from clcl
+    let order = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+    let mut hclen = 15;
+    while hclen > 0 && clcl[order[hclen + 3]] == 0 {
+        hclen -= 1;
+    }
+    
+    // Calculate size
+    let mut result = 14.0; // 5 + 5 + 4 bits for HLIT, HDIST, HCLEN
+    result += (hclen + 4) as f64 * 3.0; // Code length code lengths
+    
+    // Size of RLE encoded data
+    for &symbol in &rle {
+        result += clcl[symbol as usize] as f64;
+        match symbol {
+            16 => result += 2.0, // 2 extra bits
+            17 => result += 3.0, // 3 extra bits
+            18 => result += 7.0, // 7 extra bits
+            _ => {}
+        }
+    }
+    
+    result
+}
+
+/// Calculate tree size trying all RLE encoding options
+fn calculate_tree_size(ll_lengths: &[u32; ZOPFLI_NUM_LL], d_lengths: &[u32; ZOPFLI_NUM_D]) -> f64 {
+    let mut best_size = f64::MAX;
+    
+    // Try all 8 combinations of using codes 16, 17, 18
+    for i in 0..8 {
+        let use_16 = (i & 1) != 0;
+        let use_17 = (i & 2) != 0;
+        let use_18 = (i & 4) != 0;
+        
+        let size = encode_tree(ll_lengths, d_lengths, use_16, use_17, use_18);
+        if size < best_size {
+            best_size = size;
+        }
+    }
+    
+    best_size
 }
 
 /// Calculate block size in bits for a specific block type
